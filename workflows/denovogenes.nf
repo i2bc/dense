@@ -110,6 +110,13 @@ if(params.tree){
 	tree = file("dummy")
 }
 
+/// taxdump
+if(params.taxdump){
+	taxdump = file(params.taxdump)
+} else {
+	taxdump = file("dummy")
+}
+
 // trg_node
 if(!params.trg_node){ trg_node = "null"} else { trg_node = params.trg_node }
 
@@ -194,9 +201,9 @@ workflow DENOVOGENES {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 
-	CHECK_INPUTS( 	
-				 tree,
-				 file(params.gendir)
+	CHECK_INPUTS(
+				 file(params.gendir),
+				 tree
 				)
 
 	// genomic FASTA and GFF3 pairs that will be processed
@@ -298,12 +305,13 @@ workflow DENOVOGENES {
 						.map{ focal_name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_faa },
 						neighbor_CDS_taxids, 
 						file(params.genera_db)
-					)
+					  )
 				genera_out_ch = GENERA.out
 			}
 
 			GENERA_FILTER(
 						  genera_out_ch,
+						  taxdump,
 						  focal_taxid, 
 						  params.trg_rank,
 						  trg_node,

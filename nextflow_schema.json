@@ -147,8 +147,13 @@
                 },
                 "genera_db": {
                     "type": "string",
-                    "description": "The directory that contains : nr.dmd, ncbi_lineages.csv, taxdump/. Necessary if a list of TRGs is not provided ('--TRGs').",
+                    "description": "The directory that contains : nr.dmd. Necessary if a list of TRGs is not provided ('--TRGs').",
                     "format": "directory-path"
+                },
+                "taxdump": {
+                  "type": "string",
+                  "description": "The taxdump directory path (otherwise downloaded).",
+                  "format": "directory-path"
                 },
                 "taxids": {
                     "type": "string",

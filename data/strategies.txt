@@ -1,0 +1,7 @@
+>2
+TRG is orphan
+>1
+TRG has a non-coding match in a genome without any CDS match
+>0
+TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match
+

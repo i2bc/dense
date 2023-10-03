@@ -15,12 +15,12 @@ process TEST {
 process CHECK_INPUTS {
 
 	input:
-		path tree
 		path gendir
+		path tree
 		
 	output:
-		path "genome_files.txt",	emit : genome_files
-		path "valid_tree.nwk",		emit : tree
+		path "genome_files.txt", emit : genome_files
+		path "valid_tree.nwk",	 emit : tree
 
 	"""
 
@@ -95,6 +95,7 @@ process CHECK_INPUTS {
 		gff=$gendir/\$( ls $gendir | grep \$genome | grep -f $baseDir/data/gff3_ext.txt )
 		echo "\${PWD}/\${fasta}__,__\${PWD}/\${gff}" >> genome_files.txt
 	done
+
 	"""
 
 
@@ -177,8 +178,8 @@ process GENERA {
 	-q $focal_CDS \
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
-	-b $db/nr \
-	-r $baseDir/data/ncbi_lineages.csv
+	-b $db/nr #\
+	#-r $baseDir/data/ncbi_lineages.csv
 	"""
 }
 
@@ -186,11 +187,12 @@ process GENERA {
 
 
 process GENERA_FILTER {
-
+	debug true
 	publishDir "${params.outdir}/genera_results"
 
 	input:
 		path genera_out
+		path taxdump
 		val taxid
 		val TRG_rank
 		val TRG_node
@@ -202,6 +204,25 @@ process GENERA_FILTER {
 	"""
 	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
 
+
+	#### If necessary, download taxdump/ : ##############################################
+	# If '--taxdump' is not provided,
+	if [ $taxdump == "dummy" ]
+	then
+		# If there is not already such a directory in the workflow dir,
+		if [ ! -d $baseDir/taxdump ]
+		then
+			# Download it
+			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+			mkdir -p $baseDir/taxdump && tar zxf new_taxdump.tar.gz -C $baseDir/taxdump
+		fi
+		valid_taxdump="$baseDir/taxdump"
+	else
+		valid_taxdump=$taxdump
+	fi
+	#####################################################################################
+
+
 	# First, find the nodes ("ages") to characterize TRGs.
 	
 	# 'TRG_node' is the node where TRGs "start", in other words : 
@@ -211,29 +232,7 @@ process GENERA_FILTER {
 	if [ $TRG_node == "null" ]
 	then
 		echo "As no TRG_node was provided, using TRG_rank (${TRG_rank})."
-
-		TRG_node=\$(awk -v taxid="${taxid}" -v TRG_rank="${TRG_rank}" '
-
-			BEGIN {FS=OFS=","} 
-
-			# The first line is the header with the possible ranks
-			NR == 1 { 
-					for (i=1; i<=NF; ++i) { 
-							if (\$i == TRG_rank) {
-									col = i
-							}
-					}
-					# If col does not exist, exit.
-					if (length(col) == 0){ 
-							print "WARNING : NO rank found for "TRG_rank" in taxid "taxid" (see --TRG_rank)."
-							exit 0
-					}
-			}
-
-			# If col exists, find the value of column 'col' at the row of the taxid
-			\$1 == taxid { print \$col }
-
-		' $baseDir/data/ncbi_lineages.csv)
+		TRG_node=\$(rank_to_node.sh \$valid_taxdump $taxid $TRG_rank)
 	else
 		echo "Using TRG_node to filter CDS."
 		TRG_node=$TRG_node
@@ -241,10 +240,11 @@ process GENERA_FILTER {
 
 	echo "TRG_node is now set to '\${TRG_node}'."
 
+
 	awk -v taxid="${taxid}" '
 		BEGIN{FS=OFS="\t\\\\|\t"}
 		\$1 == taxid {print \$3\$2}
-	' $baseDir/data/taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
+	' \$valid_taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
 	awk -v TRG_node="\${TRG_node}" '
 		BEGIN{FS="; "}
 		NR==1 {
