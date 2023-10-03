@@ -1,5 +1,3 @@
-# ![nf-core/denovogenes](docs/images/logo_light.png#gh-light-mode-only) ![nf-core/denovogenes](docs/images/logo_dark.png#gh-dark-mode-only)
-
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
 
 ## Introduction
