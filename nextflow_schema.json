@@ -1,0 +1,227 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/denovogenes/master/nextflow_schema.json",
+    "title": "denovogenes pipeline parameters",
+    "description": "Identifies genes that have emerged de novo (from non-coding DNA).",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "outdir",
+                "gendir"
+            ],
+            "properties": {
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                },
+                "gendir": {
+                    "type": "string",
+                    "description": "The input directory that contains a genomic FASTA file ('.fna','.fasta') and a GFF3 annotation file ('.gff','.gff3') for each genome (focal and neighbors).",
+                    "format": "directory-path"
+                }
+            }
+        },
+        "required_input_values": {
+            "title": "Required input values",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "focal": {
+                    "type": "string",
+                    "description": "The name of the focal genome (the one whose CDS will be tested)."
+                },
+                "strategy": {
+                    "type": "integer",
+                    "default": 1,
+                    "description": "The strategy number to apply (see 'data/strategies.txt').",
+                    "minimum": 1,
+                    "maximum": 3
+                }
+            },
+            "required": [
+                "focal",
+                "strategy"
+            ]
+        },
+        "other_important_parameters": {
+            "title": "Other important parameters",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "tree": {
+                    "type": "string",
+                    "description": "The phylogenetic tree that shows relations between the genomes (Newick format). E.g. \"((Ptep:0.75680000,Pruf:0.75680000)'210':0.38205000,Pfoa:1.13885000)'220';\"",
+                    "format": "file-path"
+                },
+                "help": {
+                    "type": "boolean",
+                    "description": "Throws this page."
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional config options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
+            "help_text": "The centralised nf-core configuration profiles use a handful of pipeline parameters to describe themselves. This information is then printed to the Nextflow log when you run a pipeline. You should not need to change these values when you run a pipeline.",
+            "properties": {
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
+                "config_profile_description": {
+                    "type": "string",
+                    "description": "Institutional config description.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                }
+            }
+        },
+        "max_job_request_options": {
+            "title": "Max job request options",
+            "type": "object",
+            "fa_icon": "fab fa-acquisitions-incorporated",
+            "description": "Set the top limit for requested resources for any single job.",
+            "help_text": "If you are running on a smaller system, a pipeline step requesting more resources than are available may cause the Nextflow to stop the run with an error. These options allow you to cap the maximum resources requested by any single job so that the pipeline will run on your system.\n\nNote that you can not _increase_ the resources requested by any job using these options. For that you will need your own configuration file. See [the nf-core website](https://nf-co.re/usage/configuration) for details.",
+            "properties": {
+                "max_cpus": {
+                    "type": "integer",
+                    "description": "Maximum number of CPUs that can be requested for any single job.",
+                    "default": 100,
+                    "fa_icon": "fas fa-microchip",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
+                },
+                "max_memory": {
+                    "type": "string",
+                    "description": "Maximum amount of memory that can be requested for any single job.",
+                    "default": "128.GB",
+                    "fa_icon": "fas fa-memory",
+                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
+                },
+                "max_time": {
+                    "type": "string",
+                    "description": "Maximum amount of time that can be requested for any single job.",
+                    "default": "240.h",
+                    "fa_icon": "far fa-clock",
+                    "pattern": "^(\\d+\\.?\\s*(s|m|h|d|day)\\s*)+$",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
+                }
+            }
+        },
+        "trg_list_options": {
+            "title": "TRG list options",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "trgsblastdir": {
+                    "type": "string",
+                    "description": "A directory with the (precomputed) BLAST output necessary for TRG homologs detection. Two files per neighbor genome, must be named 'TRG_multielongated_blastp_${neighbor}_CDS_elongated.out' and 'TRG_multielongated_tblastn_${neighbor}_genome.out'. Incompatible with the following parameters.",
+                    "format": "directory-path"
+                },
+                "trgs": {
+                    "type": "string",
+                    "description": "A text file with a predefined list of CDS to consider as TRGs (incompatible with the following parameters).",
+                    "format": "file-path"
+                },
+                "genera_out": {
+                    "type": "string",
+                    "description": "A '.tsv' file with precomputed gene ages from genEra. Incompatible with the following parameters.",
+                    "format": "file-path"
+                },
+                "genera_db": {
+                    "type": "string",
+                    "description": "The directory that contains : nr.dmd, ncbi_lineages.csv, taxdump/. Necessary if a list of TRGs is not provided ('--TRGs').",
+                    "format": "directory-path"
+                },
+                "taxids": {
+                    "type": "string",
+                    "description": "A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors).",
+                    "format": "file-path",
+                    "mimetype": "tsv"
+                },
+                "trg_node": {
+                    "type": "string",
+                    "description": "A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank')."
+                },
+                "trg_rank": {
+                    "type": "string",
+                    "default": "genus",
+                    "description": "A taxonomic rank (e.g. 'order') to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_node')."
+                }
+            }
+        },
+        "synteny_checking": {
+            "title": "Synteny checking",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "synteny": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters."
+                },
+                "orthodir": {
+                    "type": "string",
+                    "description": "A directory with the precomputed pairs of orthologous genes for each focal-neighbor genomes pair. One file per genomes pair, must be named '${focal}_${neighbor}_orthologs.tsv'. Incompatible with the following parameters.",
+                    "format": "directory-path"
+                },
+                "blastdir": {
+                    "type": "string",
+                    "description": "A directory with the (precomputed) BLAST output necessary for orthologs detection. Two files per genomes pair, must be named '${focal}_CDS_BLASTp_${neighbor}_CDS.out' and '${neighbor}_CDS_BLASTp_${focal}_CDS.out'. Incompatible with '--orthodir'.",
+                    "format": "directory-path"
+                },
+                "blasttool": {
+                    "type": "string",
+                    "description": "The tool to perform alignments.",
+                    "default": "diamond",
+                    "enum": [
+                        "blast",
+                        "diamond",
+                        "diamondUS"
+                    ]
+                }
+            }
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/required_input_values"
+        },
+        {
+            "$ref": "#/definitions/other_important_parameters"
+        },
+        {
+            "$ref": "#/definitions/institutional_config_options"
+        },
+        {
+            "$ref": "#/definitions/max_job_request_options"
+        },
+        {
+            "$ref": "#/definitions/trg_list_options"
+        },
+        {
+            "$ref": "#/definitions/synteny_checking"
+        }
+    ]
+}
