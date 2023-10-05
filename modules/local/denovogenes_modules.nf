@@ -23,7 +23,8 @@ process CHECK_INPUTS {
 		path "valid_tree.nwk",	 emit : tree
 
 	"""
-
+	chmod -R +x ${projectDir}/bin
+	
 	# 1. Check that there is a single non-empty valid FASTA and GFF3 file per genome :
 
 	# The list of non-empty files from 'gendir' :
@@ -870,7 +871,7 @@ process FILTER_ISOFORMS {
 		
 	"""
 	touch denovogenes.txt
-	
+
 	# Compare the list of TRGs before and after applying the slection strategy.
 	# Remove the TRGs with excluded isoforms.
 	awk '
