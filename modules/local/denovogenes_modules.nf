@@ -2,9 +2,9 @@ process TEST {
 	tag "Super test trop bien"
 	debug true
 
-	input : tuple val(name), path(chemin), val(taxid)
 	"""
-	echo "$name et puis $chemin et puis $taxid"
+	python --version
+	awk -V
 	"""
 
 }
@@ -869,6 +869,8 @@ process FILTER_ISOFORMS {
 		path "denovogenes.txt"
 		
 	"""
+	touch denovogenes.txt
+	
 	# Compare the list of TRGs before and after applying the slection strategy.
 	# Remove the TRGs with excluded isoforms.
 	awk '

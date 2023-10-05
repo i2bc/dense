@@ -3,7 +3,7 @@
     WELCOME
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-
+log.info ""
 // Here is an attempt of ASCII art
 log.info "Project : $workflow.projectDir"
 log.info "      _                                                           "
@@ -193,7 +193,7 @@ include { TEST                       } from '../modules/local/denovogenes_module
 workflow DENOVOGENES {
 //workflow {
 
-	//TEST()
+	// TEST()
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
