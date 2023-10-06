@@ -59,6 +59,12 @@ In order to use the latest Nextflow version, you should use:
 ```bash
 nextflow self-update
 ```
+
+To test your Nextflow installation you can use : 
+```bash
+nextflow run hello
+```
+
 Now, you can run the pipeline using:
 
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
