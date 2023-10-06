@@ -24,7 +24,7 @@ process CHECK_INPUTS {
 
 	"""
 	chmod -R +x ${projectDir}/bin
-	
+
 	# 1. Check that there is a single non-empty valid FASTA and GFF3 file per genome :
 
 	# The list of non-empty files from 'gendir' :
@@ -674,8 +674,8 @@ process CHECK_SYNTENY {
 
 	publishDir "${params.outdir}/synteny"
 
-	max_proc_mem = '20 GB'
-	memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
+	// max_proc_mem = '20.GB'
+	// memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
 	
 	input:
 		tuple val(focal), path(focal_gff, stageAs:'focal_gff.gff')
