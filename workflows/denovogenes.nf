@@ -25,21 +25,7 @@ log.info "\n"
 */
 
 include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } from 'plugin/nf-validation'
-log.info "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-test='20.GB'
-test_mb=  MemoryUnit.of(test).toMega()
-donne=  MemoryUnit.of(params.max_memory).toMega()
-bool="${donne < test_mb}"
-bool2={ MemoryUnit.of(params.max_memory).toMega() < MemoryUnit.of(test).toMega() ? params.max_memory : test }
-bool2={ 2 < 3 ? "lower" : "greater" }
-//log.info(test_mb)
-//log.info(donne)
-log.info("Bool : ${bool}")
-log.info("Bool2 : ${bool2}")
 
-// value={ "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(test).toMega()}mb" ? params.max_memory : test }
-log.info "$value"
-log.info "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 // Print help message, supply typical command line usage for the pipeline
 if (params.help) {
    log.info paramsHelp("nextflow run denovogenes.nf --gendir <DIR WITH GFF AND FASTA> --focal <FOCAL_GENOME_NAME> --outdir <OUTDIR>")
