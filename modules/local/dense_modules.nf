@@ -188,7 +188,7 @@ process GENERA {
 
 
 process GENERA_FILTER {
-	debug true
+
 	publishDir "${params.outdir}/genera_results"
 
 	input:

@@ -6,16 +6,14 @@
 
 // Here is an attempt of ASCII art
 log.info "Project : $workflow.projectDir"
-log.info "      _                                                           "
-log.info "     | |                                                          "
-log.info "   __| | ___   _ __   _____   _____     __ _  ___ _ __   ___  ___ "
-log.info "  / _` |/ _ \\ | '_ \\ / _ \\ \\ / / _ \\   / _` |/ _ \\ '_ \\ / _ \\/ __|"
-log.info " | (_| |  __/ | | | | (_) \\ V / (_) | | (_| |  __/ | | |  __/\\__ \\"
-log.info "  \\__,_|\\___| |_| |_|\\___/ \\_/ \\___/   \\__, |\\___|_| |_|\\___||___/"
-log.info "                                        __/ |                     "
-log.info "                                       |___/                      "
+// Here is an attempt of ASCII art
+log.info "Project : $workflow.projectDir"
+log.info "  ___  ___ _  _ ___ ___ "
+log.info " |   \\| __| \\| / __| __|"
+log.info " | |) | _|| .` \\__ \\ _| "
+log.info " |___/|___|_|\\_|___/___|"
 log.info ""
-log.info "Welcome to the de novo genes Nextflow pipeline."
+log.info "Welcome to DENSE."
 log.info "\n"
 
 /*
@@ -28,7 +26,7 @@ include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } fr
 
 // Print help message, supply typical command line usage for the pipeline
 if (params.help) {
-   log.info paramsHelp("nextflow run denovogenes.nf --gendir <DIR WITH GFF AND FASTA> --focal <FOCAL_GENOME_NAME> --outdir <OUTDIR>")
+   log.info paramsHelp("nextflow run denovogenes.nf --gendir <DIR WITH GFF AND FASTA> --focal <FOCAL_GENOME_NAME> --tree <NEWICK WITH FOCAL AND NEIGHBORS> --outdir <OUTDIR>")
    exit 0
 }
 
@@ -152,6 +150,11 @@ if (params.trgs) {
 	}
 }
 
+if (!params.trgs && !params.taxids){
+	log.info "WARNING : you should provide either a '--trgs' list (user-defined TRGs), or '--taxids' along with '--genera_db' (to run genEra) or '--genera_out' (if you have already run genEra)."
+	System.exit(0)
+}
+
 if ( params.blastdir ){ log.info "A directory with the precomputed BLAST outputs has been provided : '${params.blastdir}'" }
 if ( params.orthodir ){ log.info "A directory with the precomputed ortholog pairs has been provided : '${params.orthodir}'" }
 log.info ""
@@ -163,26 +166,26 @@ log.info ""
 */
 
 include { ORTHOLOGS                  } from '../subworkflows/local/orthologs'
-include { CHECK_INPUTS               } from '../modules/local/denovogenes_modules.nf'
+include { CHECK_INPUTS               } from '../modules/local/dense_modules.nf'
 include { MRNA_TO_GENE               } from '../modules/local/orthologs_modules.nf'
-include { EXTRACT_CDS                } from '../modules/local/denovogenes_modules.nf'
-include { GENERA                     } from '../modules/local/denovogenes_modules.nf'
-include { GENERA_FILTER              } from '../modules/local/denovogenes_modules.nf'
-include { FIND_TRG                   } from '../modules/local/denovogenes_modules.nf'
-include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/denovogenes_modules.nf'
-include { ELONGATE_CDS               } from '../modules/local/denovogenes_modules.nf'
-include { BLAST                      } from '../modules/local/denovogenes_modules.nf'
-include { TRGS_BEFORE_STRATEGY       } from '../modules/local/denovogenes_modules.nf'
-include { BLAST_FILTER               } from '../modules/local/denovogenes_modules.nf'
-include { DUMMY_DISTANCES            } from '../modules/local/denovogenes_modules.nf'
-include { TREE_DISTANCES             } from '../modules/local/denovogenes_modules.nf'
-include { TRG_TABLE                  } from '../modules/local/denovogenes_modules.nf'
-include { CHECK_SYNTENY_INPUTS       } from '../modules/local/denovogenes_modules.nf'
-include { CHECK_SYNTENY              } from '../modules/local/denovogenes_modules.nf'
-include { SYNTENY_TO_TABLE           } from '../modules/local/denovogenes_modules.nf'
-include { FILTER_TABLE_WITH_STRATEGY } from '../modules/local/denovogenes_modules.nf'
-include { FILTER_ISOFORMS            } from '../modules/local/denovogenes_modules.nf'
-include { TEST                       } from '../modules/local/denovogenes_modules.nf'
+include { EXTRACT_CDS                } from '../modules/local/dense_modules.nf'
+include { GENERA                     } from '../modules/local/dense_modules.nf'
+include { GENERA_FILTER              } from '../modules/local/dense_modules.nf'
+include { FIND_TRG                   } from '../modules/local/dense_modules.nf'
+include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/dense_modules.nf'
+include { ELONGATE_CDS               } from '../modules/local/dense_modules.nf'
+include { BLAST                      } from '../modules/local/dense_modules.nf'
+include { TRGS_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
+include { BLAST_FILTER               } from '../modules/local/dense_modules.nf'
+include { DUMMY_DISTANCES            } from '../modules/local/dense_modules.nf'
+include { TREE_DISTANCES             } from '../modules/local/dense_modules.nf'
+include { TRG_TABLE                  } from '../modules/local/dense_modules.nf'
+include { CHECK_SYNTENY_INPUTS       } from '../modules/local/dense_modules.nf'
+include { CHECK_SYNTENY              } from '../modules/local/dense_modules.nf'
+include { SYNTENY_TO_TABLE           } from '../modules/local/dense_modules.nf'
+include { FILTER_TABLE_WITH_STRATEGY } from '../modules/local/dense_modules.nf'
+include { FILTER_ISOFORMS            } from '../modules/local/dense_modules.nf'
+include { TEST                       } from '../modules/local/dense_modules.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -190,7 +193,7 @@ include { TEST                       } from '../modules/local/denovogenes_module
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow DENOVOGENES {
+workflow DENSE {
 //workflow {
 
 	// TEST()
@@ -364,7 +367,7 @@ workflow DENOVOGENES {
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	Build a table to report the best hits of ech TRG in the neighbor genomes
+	Build a table to report the best hits of each TRG in the neighbor genomes
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 

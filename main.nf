@@ -48,13 +48,13 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { DENOVOGENES } from './workflows/denovogenes'
+include { DENSE } from './workflows/dense.nf'
 
 //
 // WORKFLOW: Run main denovogenes analysis pipeline
 //
-workflow DENOVOGENES_WF {
-    DENOVOGENES ()
+workflow DENSE_WF {
+    DENSE ()
 }
 
 /*
@@ -68,7 +68,7 @@ workflow DENOVOGENES_WF {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    DENOVOGENES_WF ()
+    DENSE_WF ()
 }
 
 /*
@@ -76,3 +76,4 @@ workflow {
     THE END
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+
