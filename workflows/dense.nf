@@ -150,6 +150,11 @@ if (params.trgs) {
 	}
 }
 
+if (!params.trgs && !params.taxids){
+	log.info "WARNING : you should provide either a '--trgs' list (user-defined TRGs), or '--taxids' along with '--genera_db' (to run genEra) or '--genera_out' (if you have already run genEra)."
+	System.exit(0)
+}
+
 if ( params.blastdir ){ log.info "A directory with the precomputed BLAST outputs has been provided : '${params.blastdir}'" }
 if ( params.orthodir ){ log.info "A directory with the precomputed ortholog pairs has been provided : '${params.orthodir}'" }
 log.info ""
