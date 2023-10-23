@@ -2,7 +2,7 @@
 
 ## Introduction
 
-**denovogenes** is a bioinformatics pipeline that finds genes that have emerged *de novo* (e.i. from non-coding DNA).
+**DENSE** is a bioinformatics pipeline that finds genes that have emerged *de novo* (e.i. from non-coding DNA).
 
 It uses a genome of interest and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files).
 
@@ -70,7 +70,7 @@ Now, you can run the pipeline using:
 <!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
 
 ```bash
-nextflow run nf-core/denovogenes \
+nextflow run nf-core/DENSE \
    -profile <docker/singularity/.../institute> \
    --input samplesheet.csv \
    --outdir <OUTDIR>
@@ -81,17 +81,17 @@ nextflow run nf-core/denovogenes \
 > provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/denovogenes/usage) and the [parameter documentation](https://nf-co.re/denovogenes/parameters).
+For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/DENSE/usage) and the [parameter documentation](https://nf-co.re/DENSE/parameters).
 
 ## Pipeline output
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/denovogenes/results) tab on the nf-core website pipeline page.
+To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/DENSE/results) tab on the nf-core website pipeline page.
 For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/denovogenes/output).
+[output documentation](https://nf-co.re/DENSE/output).
 
 ## Credits
 
-nf-core/denovogenes was originally written by Paul Roginski.
+nf-core/DENSE was originally written by Paul Roginski.
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
@@ -101,12 +101,12 @@ We thank the following people for their extensive assistance in the development 
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on the [Slack `#denovogenes` channel](https://nfcore.slack.com/channels/denovogenes) (you can join with [this invite](https://nf-co.re/join/slack)).
+For further information or help, don't hesitate to get in touch on the [Slack `#DENSE` channel](https://nfcore.slack.com/channels/DENSE) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citations
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  nf-core/denovogenes for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+<!-- If you use  nf-core/DENSE for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 

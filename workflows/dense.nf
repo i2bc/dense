@@ -6,16 +6,14 @@
 
 // Here is an attempt of ASCII art
 log.info "Project : $workflow.projectDir"
-log.info "      _                                                           "
-log.info "     | |                                                          "
-log.info "   __| | ___   _ __   _____   _____     __ _  ___ _ __   ___  ___ "
-log.info "  / _` |/ _ \\ | '_ \\ / _ \\ \\ / / _ \\   / _` |/ _ \\ '_ \\ / _ \\/ __|"
-log.info " | (_| |  __/ | | | | (_) \\ V / (_) | | (_| |  __/ | | |  __/\\__ \\"
-log.info "  \\__,_|\\___| |_| |_|\\___/ \\_/ \\___/   \\__, |\\___|_| |_|\\___||___/"
-log.info "                                        __/ |                     "
-log.info "                                       |___/                      "
+// Here is an attempt of ASCII art
+log.info "Project : $workflow.projectDir"
+log.info "  ___  ___ _  _ ___ ___ "
+log.info " |   \\| __| \\| / __| __|"
+log.info " | |) | _|| .` \\__ \\ _| "
+log.info " |___/|___|_|\\_|___/___|"
 log.info ""
-log.info "Welcome to the de novo genes Nextflow pipeline."
+log.info "Welcome to DENSE."
 log.info "\n"
 
 /*
