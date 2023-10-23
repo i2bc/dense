@@ -41,7 +41,7 @@
                 "strategy": {
                     "type": "integer",
                     "default": 1,
-                    "description": "The strategy number to apply (see 'data/strategies.txt').",
+                    "description": "The strategy number to apply : 1->TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match ; 2->TRG has a non-coding match in a genome without any CDS match ; 3->TRG is orphan",
                     "minimum": 1,
                     "maximum": 3
                 }
@@ -142,7 +142,7 @@
                 },
                 "genera_out": {
                     "type": "string",
-                    "description": "A '.tsv' file with precomputed gene ages from genEra. Incompatible with the following parameters.",
+                    "description": "A '.tsv' file with precomputed gene ages from genEra. Makes '--genera_db' useless.",
                     "format": "file-path"
                 },
                 "genera_db": {
@@ -151,9 +151,9 @@
                     "format": "directory-path"
                 },
                 "taxdump": {
-                  "type": "string",
-                  "description": "The taxdump directory path (otherwise downloaded).",
-                  "format": "directory-path"
+                    "type": "string",
+                    "description": "The taxdump directory path (otherwise downloaded).",
+                    "format": "directory-path"
                 },
                 "taxids": {
                     "type": "string",
