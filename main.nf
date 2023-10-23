@@ -48,7 +48,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { DENOVOGENES } from './workflows/dense'
+include { DENOVOGENES } from './workflows/dense.nf'
 
 //
 // WORKFLOW: Run main denovogenes analysis pipeline
