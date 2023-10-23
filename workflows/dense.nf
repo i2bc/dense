@@ -190,7 +190,7 @@ include { TEST                       } from '../modules/local/dense_modules.nf'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-workflow DENOVOGENES {
+workflow DENSE {
 //workflow {
 
 	// TEST()
