@@ -50,8 +50,8 @@ if (params.strategy != 1 && params.tree) {
 }
 
 if (params.trg_node && params.trg_rank) {
-	log.info "'--trg_node' and '--trg_rank' are not compatible'. Select only one of them."
-	stop = true
+	log.info "'${params.trg_node}' ('--trg_node') will override '${params.trg_rank}' ('--trg_rank')."
+	// stop = true
 }
 
 if (params.trgs) {
@@ -213,7 +213,7 @@ workflow DENSE {
 	genome_ch = CHECK_INPUTS.out.genome_files
 		.splitText() 
 		.map { tuple( it.strip().split("__,__") ) }
-		.map { fasta, gff -> [ file(fasta).getSimpleName(), fasta, gff ] }
+		.map { fasta, gff -> [ file(fasta).getBaseName(), fasta, gff ] }
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -227,7 +227,6 @@ workflow DENSE {
 	focal_ch = EXTRACT_CDS.out
 	.map { name, fasta, gff, fai, CDS_fna, CDS_faa -> [ name, fasta, gff, fai, CDS_fna, CDS_faa ] }
 	.filter { name, fasta, gff, fai, CDS_fna, CDS_faa -> name == params.focal }
-	// .filter ( ~/\[${params.focal}, .*/ )
 
 	// focal mRNA_to_gene mapping
 	MRNA_TO_GENE(
@@ -286,10 +285,10 @@ workflow DENSE {
 			.filter { name, taxid -> name == params.focal }
 			.map { name, taxid -> taxid }
 			.first()
+			.ifEmpty('EMPTY')
 
 			// If the user has provided a precomputed genEra output,
 			if(params.genera_out){
-
 				genera_out_ch = file(params.genera_out)
 
 			} else {

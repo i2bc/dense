@@ -123,7 +123,7 @@ process BEST_HITS {
 		tuple val(focal_name), val(neighbor_name), path( focal_vs_neighbor_out, stageAs: 'focal_neighbor.out' ), path( neighbor_vs_focal_out )
 		
 	output:
-		tuple val(neighbor_name), path('focal_neighbor_best_hits.tsv'), path("${neighbor_vs_focal_out.getSimpleName()}_best_hits.tsv"), emit : mainout
+		tuple val(neighbor_name), path('focal_neighbor_best_hits.tsv'), path("${neighbor_vs_focal_out.getBaseName()}_best_hits.tsv"), emit : mainout
 		val focal_name, emit : focal_name
 
 		

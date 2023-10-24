@@ -203,6 +203,8 @@ process GENERA_FILTER {
 		path 'TRGs.txt'
 		
 	"""
+	if [[ $taxid == "EMPTY" ]]; then echo "The focal taxid could not be found!"; exit 1 ; fi
+
 	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
 
 
@@ -896,5 +898,23 @@ process FILTER_ISOFORMS {
 		}
 
 	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
+	"""
+}
+
+
+
+
+process WARN_MISSING {
+	debug true
+	input:
+	val x
+	val y
+
+	when:
+    y == 'EMPTY'
+
+	"""
+	echo $x
+	exit 1
 	"""
 }
