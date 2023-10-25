@@ -17,7 +17,7 @@ import argparse
 import dendropy
 import operator
 import csv
-
+import sys
 
 
 # Arguments parsing
@@ -56,8 +56,10 @@ pdc = tree.phylogenetic_distance_matrix()
 
 
 # Get the focal taxon
-index = [ i for i in range(0,len(tree.taxon_namespace)) if tree.taxon_namespace[i].label == focal_name ][0]
-focal = tree.taxon_namespace[index]
+index_list = [ i for i in range(0,len(tree.taxon_namespace)) if tree.taxon_namespace[i].label == focal_name ]
+if len(index_list) > 0 :
+	focal = tree.taxon_namespace[index_list[0]]
+else : print("'{}' could not be found in the provided tree.".format(focal_name)) ; sys.exit()
 
 
 # Build a dictionnary with species as keys and distance to the focal species as values

@@ -199,8 +199,19 @@
                     "default": "diamond",
                     "enum": [
                         "blast",
-                        "diamond",
-                        "diamondUS"
+                        "diamond"
+                    ]
+                },
+                "sensitivity": {
+                    "type": "string",
+                    "description": "The tool to perform alignments.",
+                    "enum": [
+                        "fast",
+                        "mid-sensitive",
+                        "sensitive",
+                        "more-sensitive",
+                        "very-sensitive",
+                        "ultra-sensitive"
                     ]
                 }
             }

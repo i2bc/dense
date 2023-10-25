@@ -46,16 +46,22 @@ workflow ORTHOLOGS {
 		neighbor_blast_ch = neighbors_ortho_ch
 		.map { name, gff, CDS_faa -> [ name, CDS_faa ] }
 
-		if ( params.blasttool == "diamond" || params.blasttool == "diamondUS" ){
+		if ( params.blasttool == "diamond" ){
 
+			if (params.sensitivity) {
+				sensitivity = "--${params.sensitivity}"
+			} else {
+				sensitivity = ""
+			}
 			DIAMOND_BLAST(
 							focal_ortho_ch,
 							neighbor_blast_ch,
-							params.blasttool
+							sensitivity
 						  )
 			BLAST_out_ch = DIAMOND_BLAST.out
 
-		} else {
+		}
+		if ( params.blasttool == "blast" ){
 
 			BLAST(
 					focal_ortho_ch,
