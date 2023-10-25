@@ -10,7 +10,7 @@ log.info "  ___  ___ _  _ ___ ___ "
 log.info " |   \\| __| \\| / __| __|"
 log.info " | |) | _|| .` \\__ \\ _| "
 log.info " |___/|___|_|\\_|___/___|"
-log.info ""
+log.info "\n\n"
 log.info "Welcome to DENSE."
 log.info "\n"
 
@@ -148,7 +148,7 @@ if (params.trgs) {
 	}
 }
 
-if (!params.trgs && !params.taxids){
+if ((!params.trgs && !params.taxids) || (params.taxids && !params.genera_out && !params.genera_db)) {
 	log.info "WARNING : you should provide either a '--trgs' list (user-defined TRGs), or '--taxids' along with '--genera_db' (to run genEra) or '--genera_out' (if you have already run genEra)."
 	System.exit(0)
 }
