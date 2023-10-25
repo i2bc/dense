@@ -202,7 +202,7 @@
                         "diamond"
                     ]
                 },
-                "sensitivity": {
+                "diamond_sens": {
                     "type": "string",
                     "description": "The tool to perform alignments.",
                     "enum": [

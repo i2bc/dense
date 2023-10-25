@@ -48,8 +48,8 @@ workflow ORTHOLOGS {
 
 		if ( params.blasttool == "diamond" ){
 
-			if (params.sensitivity) {
-				sensitivity = "--${params.sensitivity}"
+			if (params.diamond_sens) {
+				sensitivity = "--${params.diamond_sens}"
 			} else {
 				sensitivity = ""
 			}

@@ -5,9 +5,7 @@
 */
 
 // Here is an attempt of ASCII art
-log.info "Project : $workflow.projectDir"
-// Here is an attempt of ASCII art
-log.info "Project : $workflow.projectDir"
+log.info "\n"
 log.info "  ___  ___ _  _ ___ ___ "
 log.info " |   \\| __| \\| / __| __|"
 log.info " | |) | _|| .` \\__ \\ _| "

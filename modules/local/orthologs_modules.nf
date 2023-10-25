@@ -73,7 +73,8 @@ process DIAMOND_BLAST {
 	diamond blastp  --query $focal_CDS_faa --db $neighbor_CDS_faa --threads ${task.cpus} \
 	-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
 	--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
-	-o ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out
+	-o ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out \
+	$sensitivity # optional sensitivity setting
 
 	add_qcovs.sh ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out > ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out.tmp
 	mv ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out.tmp ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out
