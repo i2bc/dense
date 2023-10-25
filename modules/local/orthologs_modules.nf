@@ -54,7 +54,7 @@ process DIAMOND_BLAST {
 	input:
 		tuple val(focal_name), path(focal_CDS_faa, stageAs: 'focal_CDS.faa')
 		tuple val(neighbor_name), path(neighbor_CDS_faa)
-		val diamondmode
+		val sensitivity
 
 	output :
 		tuple val(focal_name), val(neighbor_name), path("${focal_name}_CDS_BLASTp_${neighbor_name}_CDS*.out"), path("${neighbor_name}_CDS_BLASTp_${focal_name}_CDS*.out")
@@ -63,8 +63,6 @@ process DIAMOND_BLAST {
 	echo "cpus = ${task.cpus}"
 	timestamp=\$(date -d "today" +"%Y%m%d_%H%M")
 
-	echo "DIAMOND mode : ${diamondmode}"
-
 	# Create the required databases :
 	diamond makedb --in $neighbor_CDS_faa -d $neighbor_CDS_faa --threads ${task.cpus}
 
@@ -72,19 +70,11 @@ process DIAMOND_BLAST {
 	# Perform a ### BLASTp ### of the translated CDS FASTA of the focal genome against the translated CDS FASTA of the current genome.
 	# The -num_threads option should be adapted.
 	# blastp header = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen"
-	if [ $diamondmode == "US" ]
-	then
-		diamond blastp  --query $focal_CDS_faa --db $neighbor_CDS_faa --threads ${task.cpus} \
-		-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
-		--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
-		--ultra-sensitive \
-		-o ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out 
-	else
-		diamond blastp  --query $focal_CDS_faa --db $neighbor_CDS_faa --threads ${task.cpus} \
-		-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
-		--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
-		-o ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out
-	fi
+	diamond blastp  --query $focal_CDS_faa --db $neighbor_CDS_faa --threads ${task.cpus} \
+	-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
+	--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
+	-o ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out \
+	$sensitivity # optional sensitivity setting
 
 	add_qcovs.sh ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out > ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out.tmp
 	mv ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out.tmp ${focal_name}_CDS_BLASTp_${neighbor_name}_CDS_\${timestamp}.out
@@ -96,19 +86,11 @@ process DIAMOND_BLAST {
 		diamond makedb --in $focal_CDS_faa -d $focal_CDS_faa --threads ${task.cpus}
 		
 		# blastp header = "6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen"
-		if [ $diamondmode == "US" ]
-		then
-			diamond blastp  --query $neighbor_CDS_faa --db $focal_CDS_faa --threads ${task.cpus} \
-			-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
-			--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
-			--ultra-sensitive \
-			-o ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out
-		else
-			diamond blastp  --query $neighbor_CDS_faa --db $focal_CDS_faa --threads ${task.cpus} \
-			-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
-			--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
-			-o ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out
-		fi			
+		diamond blastp  --query $neighbor_CDS_faa --db $focal_CDS_faa --threads ${task.cpus} \
+		-f 6 qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore qlen \
+		--evalue 0.001 --unal 1 -k 0 --max-hsps 0 \
+		-o ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out \
+		$sensitivity # optional sensitivity setting
 
 		add_qcovs.sh ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out > ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out.tmp
 		mv ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out.tmp ${neighbor_name}_CDS_BLASTp_${focal_name}_CDS_\${timestamp}.out
@@ -123,7 +105,7 @@ process BEST_HITS {
 		tuple val(focal_name), val(neighbor_name), path( focal_vs_neighbor_out, stageAs: 'focal_neighbor.out' ), path( neighbor_vs_focal_out )
 		
 	output:
-		tuple val(neighbor_name), path('focal_neighbor_best_hits.tsv'), path("${neighbor_vs_focal_out.getSimpleName()}_best_hits.tsv"), emit : mainout
+		tuple val(neighbor_name), path('focal_neighbor_best_hits.tsv'), path("${neighbor_vs_focal_out.getBaseName()}_best_hits.tsv"), emit : mainout
 		val focal_name, emit : focal_name
 
 		

@@ -153,8 +153,6 @@ process GENERA {
 	tag 'phylostratigraphy'
 
 	publishDir "${params.outdir}/genera_results"
-	container 'containers/genEra_v1.4.0.sif'
-	containerOptions "-B ${params.genera_db}"
 
 	cpus params.max_cpus
 
@@ -168,6 +166,13 @@ process GENERA {
 		path "${focal_taxid}_gene_ages.tsv"
 		
 	"""
+	# If necessary, download the taxonomy dump from NCBI:
+	if [ ! -d $projectDir/taxdump ]
+	then
+		wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+		mkdir $projectDir/taxdump && tar zxf new_taxdump.tar.gz -C $projectDir/taxdump
+	fi
+
 	# -t taxID
 	# -q query fasta
 	# -n number of CPU to use
@@ -179,10 +184,46 @@ process GENERA {
 	-q $focal_CDS \
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
-	-b $db/nr #\
-	#-r $baseDir/data/ncbi_lineages.csv
+	-b $db/nr \
+	-d $projectDir/taxdump
 	"""
 }
+// process GENERA {
+
+// 	tag 'phylostratigraphy'
+
+// 	publishDir "${params.outdir}/genera_results"
+// 	container 'containers/genEra_v1.4.0.sif'
+// 	containerOptions "-B ${params.genera_db}"
+
+// 	cpus params.max_cpus
+
+// 	input:
+// 		val focal_taxid
+// 		path focal_CDS
+// 		path db
+// 		path a_option
+		
+// 	output:
+// 		path "${focal_taxid}_gene_ages.tsv"
+		
+// 	"""
+// 	# -t taxID
+// 	# -q query fasta
+// 	# -n number of CPU to use
+// 	# -b path to the nr database
+// 	# -r OR, the first time you use genEra : -d /path/to/taxdump/ \
+// 	# -x Temp dir (potentially hundreds of Go needed).
+// 	genEra \
+// 	-t $focal_taxid \
+// 	-q $focal_CDS \
+// 	-n ${task.cpus} \
+// 	-b $db/nr \
+// 	$a_option
+// 	#-a $neighbors_CDS \
+// 	#-r $baseDir/data/ncbi_lineages.csv
+// 	"""
+// }
 
 
 
@@ -203,6 +244,8 @@ process GENERA_FILTER {
 		path 'TRGs.txt'
 		
 	"""
+	if [[ $taxid == "EMPTY" ]]; then echo "The focal taxid could not be found!"; exit 1 ; fi
+
 	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
 
 
@@ -896,5 +939,23 @@ process FILTER_ISOFORMS {
 		}
 
 	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
+	"""
+}
+
+
+
+
+process WARN_MISSING {
+	debug true
+	input:
+	val x
+	val y
+
+	when:
+    y == 'EMPTY'
+
+	"""
+	echo $x
+	exit 1
 	"""
 }
