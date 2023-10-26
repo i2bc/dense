@@ -30,8 +30,8 @@ process CHECK_INPUTS {
 	# The list of non-empty files from 'gendir' :
 	gendirlist=\$(find ${gendir}/. -maxdepth 1 -not -empty -ls | awk '{print \$NF}')
 
-	echo "\${gendirlist}" | grep -f $baseDir/data/fna_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
-	echo "\${gendirlist}" | grep -f $baseDir/data/gff3_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
+	echo "\${gendirlist}" | grep -f ${projectDir}/data/fna_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
+	echo "\${gendirlist}" | grep -f ${projectDir}/data/gff3_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
 	
 	awk '
 		# Record every genome 
@@ -92,8 +92,8 @@ process CHECK_INPUTS {
 	# 3. Built a channel for the rest of the pipeline
 	cat valid_genomes.txt | while read genome
 	do
-		fasta=$gendir/\$( ls $gendir | grep \$genome | grep -f $baseDir/data/fna_ext.txt )
-		gff=$gendir/\$( ls $gendir | grep \$genome | grep -f $baseDir/data/gff3_ext.txt )
+		fasta=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/fna_ext.txt )
+		gff=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/gff3_ext.txt )
 		echo "\${PWD}/\${fasta}__,__\${PWD}/\${gff}" >> genome_files.txt
 	done
 
@@ -148,6 +148,52 @@ process EXTRACT_CDS {
 
 
 
+process TAXDUMP {
+
+	debug true
+
+	input:
+		path taxdump
+		
+	output:
+		env valid_taxdump
+		
+	"""
+	# If '--taxdump' is not provided,
+	if [ $taxdump == "dummy" ]
+	then
+
+		# Download it
+		echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+
+		# If there is not already such a directory in the project dir,
+		if [ ! -d ${projectDir}/taxdump ]
+		then
+			{
+			# Try
+			mkdir ${projectDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${projectDir}/taxdump
+			valid_taxdump="${projectDir}/taxdump"
+			} || {
+			# Executed when above fails
+			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+			valid_taxdump="${workDir}/taxdump"
+			}
+		else
+			valid_taxdump="${projectDir}/taxdump"
+		fi
+
+		echo "The taxdump directory was created in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}' next time."
+	else
+		# Just keep taxdump as it is.
+		echo "The user provided a taxdump directory. Using it."
+		valid_taxdump=$taxdump
+	fi
+	"""
+}
+
+
+
+
 process GENERA {
 
 	tag 'phylostratigraphy'
@@ -161,18 +207,12 @@ process GENERA {
 		path focal_CDS
 		path neighbors_CDS
 		path db
+		path taxdump
 		
 	output:
 		path "${focal_taxid}_gene_ages.tsv"
 		
 	"""
-	# If necessary, download the taxonomy dump from NCBI:
-	if [ ! -d $projectDir/taxdump ]
-	then
-		wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-		mkdir $projectDir/taxdump && tar zxf new_taxdump.tar.gz -C $projectDir/taxdump
-	fi
-
 	# -t taxID
 	# -q query fasta
 	# -n number of CPU to use
@@ -185,45 +225,9 @@ process GENERA {
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
 	-b $db/nr \
-	-d $projectDir/taxdump
+	-d $taxdump
 	"""
 }
-// process GENERA {
-
-// 	tag 'phylostratigraphy'
-
-// 	publishDir "${params.outdir}/genera_results"
-// 	container 'containers/genEra_v1.4.0.sif'
-// 	containerOptions "-B ${params.genera_db}"
-
-// 	cpus params.max_cpus
-
-// 	input:
-// 		val focal_taxid
-// 		path focal_CDS
-// 		path db
-// 		path a_option
-		
-// 	output:
-// 		path "${focal_taxid}_gene_ages.tsv"
-		
-// 	"""
-// 	# -t taxID
-// 	# -q query fasta
-// 	# -n number of CPU to use
-// 	# -b path to the nr database
-// 	# -r OR, the first time you use genEra : -d /path/to/taxdump/ \
-// 	# -x Temp dir (potentially hundreds of Go needed).
-// 	genEra \
-// 	-t $focal_taxid \
-// 	-q $focal_CDS \
-// 	-n ${task.cpus} \
-// 	-b $db/nr \
-// 	$a_option
-// 	#-a $neighbors_CDS \
-// 	#-r $baseDir/data/ncbi_lineages.csv
-// 	"""
-// }
 
 
 
@@ -246,25 +250,8 @@ process GENERA_FILTER {
 	"""
 	if [[ $taxid == "EMPTY" ]]; then echo "The focal taxid could not be found!"; exit 1 ; fi
 
+
 	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
-
-
-	#### If necessary, download taxdump/ : ##############################################
-	# If '--taxdump' is not provided,
-	if [ $taxdump == "dummy" ]
-	then
-		# If there is not already such a directory in the workflow dir,
-		if [ ! -d $baseDir/taxdump ]
-		then
-			# Download it
-			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-			mkdir -p $baseDir/taxdump && tar zxf new_taxdump.tar.gz -C $baseDir/taxdump
-		fi
-		valid_taxdump="$baseDir/taxdump"
-	else
-		valid_taxdump=$taxdump
-	fi
-	#####################################################################################
 
 
 	# First, find the nodes ("ages") to characterize TRGs.
@@ -276,7 +263,7 @@ process GENERA_FILTER {
 	if [ $TRG_node == "null" ]
 	then
 		echo "As no TRG_node was provided, using TRG_rank (${TRG_rank})."
-		TRG_node=\$(rank_to_node.sh \$valid_taxdump $taxid $TRG_rank)
+		TRG_node=\$(rank_to_node.sh $taxdump $taxid $TRG_rank)
 	else
 		echo "Using TRG_node to filter CDS."
 		TRG_node=$TRG_node
@@ -288,7 +275,7 @@ process GENERA_FILTER {
 	awk -v taxid="${taxid}" '
 		BEGIN{FS=OFS="\t\\\\|\t"}
 		\$1 == taxid {print \$3\$2}
-	' \$valid_taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
+	' $taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
 	awk -v TRG_node="\${TRG_node}" '
 		BEGIN{FS="; "}
 		NR==1 {
