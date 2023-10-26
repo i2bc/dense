@@ -32,8 +32,8 @@ process CHECK_INPUTS {
 
 	#echo "\${gendirlist}" | grep -f ${projectDir}/data/fna_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
     #echo "\${gendirlist}" | grep -f ${projectDir}/data/gff3_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
-	echo "\${gendirlist}" | grep "\\.fna$\\|\\.fasta$\\|\\.fa$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
-	echo "\${gendirlist}" | grep "\\.gff$\\|\\.gff3$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
+	echo "\${gendirlist}" | grep .fna | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
+	echo "\${gendirlist}" | grep .gff | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
 	
 	awk '
 		# Record every genome 
@@ -96,8 +96,8 @@ process CHECK_INPUTS {
 	do
 		#fasta=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/fna_ext.txt )
 		#gff=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/gff3_ext.txt )
-		fasta=$gendir/\$( ls $gendir | grep \$genome | grep "\\.fna$\\|\\.fasta$\\|\\.fa$"  )
-		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff$\\|\\.gff3$" )
+		fasta=$gendir/\$( ls $gendir | grep \$genome | grep fna  )
+		gff=$gendir/\$( ls $gendir | grep \$genome | grep gff )
 		echo "\${PWD}/\${fasta}__,__\${PWD}/\${gff}" >> genome_files.txt
 	done
 
