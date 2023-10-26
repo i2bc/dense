@@ -163,19 +163,24 @@ process TAXDUMP {
 	if [ $taxdump == "dummy" ]
 	then
 
-		# Download it
-		echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
-
 		# If there is not already such a directory in the project dir,
 		if [ ! -d ${projectDir}/taxdump ]
 		then
+
+			# Download it
+			echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+
 			{
 			# Try
 			mkdir ${projectDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${projectDir}/taxdump
 			valid_taxdump="${projectDir}/taxdump"
 			} || {
 			# Executed when above fails
-			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+			if [ ! -d ${workDir}/taxdump ]
+			then
+				mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+			fi
 			valid_taxdump="${workDir}/taxdump"
 			}
 		else
