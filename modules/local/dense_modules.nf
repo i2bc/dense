@@ -30,8 +30,10 @@ process CHECK_INPUTS {
 	# The list of non-empty files from 'gendir' :
 	gendirlist=\$(find ${gendir}/. -maxdepth 1 -not -empty -ls | awk '{print \$NF}')
 
-	echo "\${gendirlist}" | grep -f ${projectDir}/data/fna_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
-	echo "\${gendirlist}" | grep -f ${projectDir}/data/gff3_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
+	#echo "\${gendirlist}" | grep -f ${projectDir}/data/fna_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
+    #echo "\${gendirlist}" | grep -f ${projectDir}/data/gff3_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
+	echo "\${gendirlist}" | grep "\\.fna$\\|\\.fasta$\\|\\.fa$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
+	echo "\${gendirlist}" | grep "\\.gff$\\|\\.gff3$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
 	
 	awk '
 		# Record every genome 
@@ -92,8 +94,10 @@ process CHECK_INPUTS {
 	# 3. Built a channel for the rest of the pipeline
 	cat valid_genomes.txt | while read genome
 	do
-		fasta=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/fna_ext.txt )
-		gff=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/gff3_ext.txt )
+		#fasta=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/fna_ext.txt )
+		#gff=$gendir/\$( ls $gendir | grep \$genome | grep -f ${projectDir}/data/gff3_ext.txt )
+		fasta=$gendir/\$( ls $gendir | grep \$genome | grep "\\.fna$\\|\\.fasta$\\|\\.fa$"  )
+		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff$\\|\\.gff3$" )
 		echo "\${PWD}/\${fasta}__,__\${PWD}/\${gff}" >> genome_files.txt
 	done
 
@@ -187,7 +191,7 @@ process TAXDUMP {
 			valid_taxdump="${projectDir}/taxdump"
 		fi
 
-		echo "The taxdump directory was created in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}' next time."
+		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
 	else
 		# Just keep taxdump as it is.
 		echo "The user provided a taxdump directory. Using it."
