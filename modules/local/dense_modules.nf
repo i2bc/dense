@@ -269,7 +269,7 @@ process GENERA_FILTER {
 	# if TRG_node is "Mammalia" then all CDS no older than "Mammalia" are considered as TRG, 
 	# including "Mammalia" but also "Primates", and so on...
 
-	if [ $(echo "${TRG_node}") == "null" ]
+	if [ \$(echo "${TRG_node}") == "null" ]
 	then
 		echo "As no TRG_node was provided, using TRG_rank (${TRG_rank})."
 		TRG_node=\$(rank_to_node.sh $taxdump $taxid $TRG_rank)
