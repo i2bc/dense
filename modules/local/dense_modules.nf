@@ -152,6 +152,55 @@ process EXTRACT_CDS {
 
 
 
+// process TAXDUMP {
+
+// 	debug true
+
+// 	input:
+// 		path taxdump
+		
+// 	output:
+// 		env valid_taxdump
+		
+// 	"""
+// 	# If '--taxdump' is not provided,
+// 	if [ $taxdump == "dummy" ]
+// 	then
+
+// 		# If there is not already such a directory in the project dir,
+// 		if [ ! -d ${projectDir}/taxdump ]
+// 		then
+
+// 			# Download it
+// 			echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+// 			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+
+// 			{
+// 			# Try
+// 			mkdir ${projectDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${projectDir}/taxdump
+// 			valid_taxdump="${projectDir}/taxdump"
+// 			} || {
+// 			# Executed when above fails
+// 			if [ ! -d ${workDir}/taxdump ]
+// 			then
+// 				mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+// 			fi
+// 			valid_taxdump="${workDir}/taxdump"
+// 			}
+// 		else
+// 			valid_taxdump="${projectDir}/taxdump"
+// 		fi
+
+// 		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
+// 	else
+// 		# Just keep taxdump as it is.
+// 		echo "The user provided a taxdump directory. Using it."
+// 		valid_taxdump=$taxdump
+// 	fi
+// 	"""
+// }
+
+
 process TAXDUMP {
 
 	debug true
@@ -167,30 +216,15 @@ process TAXDUMP {
 	if [ $taxdump == "dummy" ]
 	then
 
-		# If there is not already such a directory in the project dir,
-		if [ ! -d ${projectDir}/taxdump ]
+		# Download it
+		echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+		wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+	
+		if [ ! -d ${workDir}/taxdump ]
 		then
-
-			# Download it
-			echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
-			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-
-			{
-			# Try
-			mkdir ${projectDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${projectDir}/taxdump
-			valid_taxdump="${projectDir}/taxdump"
-			} || {
-			# Executed when above fails
-			if [ ! -d ${workDir}/taxdump ]
-			then
-				mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
-			fi
-			valid_taxdump="${workDir}/taxdump"
-			}
-		else
-			valid_taxdump="${projectDir}/taxdump"
+			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
 		fi
-
+		valid_taxdump="${workDir}/taxdump"
 		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
 	else
 		# Just keep taxdump as it is.
@@ -199,7 +233,6 @@ process TAXDUMP {
 	fi
 	"""
 }
-
 
 
 
