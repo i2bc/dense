@@ -117,6 +117,7 @@ process EXTRACT_CDS {
 		tuple val(name), path(fasta), path(gff), path("${fasta}.fai"), path("${name}_CDS.fna"), path("${name}_CDS.faa")
 
 	"""
+	chmod -R +x ${projectDir}/bin
 
 	# Use GffRead.
 
@@ -226,10 +227,13 @@ process TAXDUMP {
 		fi
 		valid_taxdump="${workDir}/taxdump"
 		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
+
 	else
+
 		# Just keep taxdump as it is.
 		echo "The user provided a taxdump directory. Using it."
 		valid_taxdump=$taxdump
+
 	fi
 	"""
 }
@@ -461,6 +465,8 @@ process MULTIELONGATE_FOCAL_TRG {
 		path "TRG_multielongated.faa", emit : TRG_multielongated_faa
 		
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	# Generate a FASTA with the CDS of the focal genome, elongated by 100 nucleotides up and downstream :
 	
 	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_0
@@ -501,6 +507,7 @@ process ELONGATE_CDS {
 		tuple val(name), path(gfasta), path("CDS_elongated.faa")
 		
 	"""
+	chmod -R +x ${projectDir}/bin
 
 	## In order to search for homologous CDS in the genome, get a FASTA with the elongated CDS of the genome (100 nucl upstream and downstream).
 	# In case of multi matchs, the one with the best evalue is more likely to be the right one with this elongated version (bring genomic context).
@@ -632,6 +639,7 @@ process BLAST_FILTER {
 		tuple val(genome_name), path('TRG_blast_*_best_hits.tsv')
 		
 	"""
+	chmod -R +x ${projectDir}/bin
 
 	# Get the list of homologs (CDS and whole_genome) for each genome.
 	
@@ -677,6 +685,8 @@ process TREE_DISTANCES {
 		path "tree_distances.tsv"
 
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	tree_distances.py -tree $tree -focal $focal -out tree_distances.tsv 
 	"""
 }
@@ -757,6 +767,8 @@ process CHECK_SYNTENY {
 		tuple path("${focal}_vs_${genome}_synteny.out"), path("${focal}_vs_${genome}_synteny.tsv")
 		
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	python --version
 	touch ${focal}_vs_${genome}_synteny.out ${focal}_vs_${genome}_synteny.tsv
 	check_synteny.py \

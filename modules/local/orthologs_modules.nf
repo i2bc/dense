@@ -14,6 +14,8 @@ process BLAST {
 		tuple val(focal_name), val(neighbor_name), path("${focal_name}_CDS_BLASTp_${neighbor_name}_CDS*.out"), path("${neighbor_name}_CDS_BLASTp_${focal_name}_CDS*.out")
 
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	echo ${task.cpus}
 	timestamp=\$(date -d "today" +"%Y%m%d_%H%M")
 
@@ -60,6 +62,8 @@ process DIAMOND_BLAST {
 		tuple val(focal_name), val(neighbor_name), path("${focal_name}_CDS_BLASTp_${neighbor_name}_CDS*.out"), path("${neighbor_name}_CDS_BLASTp_${focal_name}_CDS*.out")
 
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	echo "cpus = ${task.cpus}"
 	timestamp=\$(date -d "today" +"%Y%m%d_%H%M")
 
@@ -135,6 +139,8 @@ process MRNA_TO_GENE {
 		tuple val(name), path("${name}_mRNA_to_gene.tsv")
 		
 	"""
+	chmod -R +x ${projectDir}/bin
+	
 	get_mRNA_parent.sh $gff > ${name}_mRNA_to_gene.tsv      
 	"""
 }
