@@ -1,0 +1,20 @@
+awk -F"\t" '
+
+BEGINFILE { printf FILENAME" : " }
+
+$0 !~ /^#/ && $3 ~ /^mRNA$/ && $9 ~ /ID=/ && $9 ~ /Parent=/ { has_mRNA = 1 }
+
+$0 !~ /^#/ && $3 ~ /^gene$/ && $9 ~ /ID=/ { has_gene = 1 }
+
+has_mRNA && has_gene { valid = 1 ; exit 0 }
+
+END {
+	if( valid ) { print "valid format" }
+	else {
+		print "ERROR - invalid format :"
+		if (!(has_mRNA)){ print "The GFF file must have \"mRNA\" features with both \"ID\" and \"Parent\" attributes (9th column)." }
+		if (!(has_gene)){ print "The GFF file must have \"gene\" features with an \"ID\" attribute (9th column)." }
+	}
+}
+
+' $1

@@ -70,7 +70,22 @@ process CHECK_INPUTS {
 	echo ""
 
 
-	# 2. Check the provided tree :
+	# 2. Check that GFF files are GFF3 compliant and have "gene" and "mRNA" features.
+	cat valid_genomes.txt | while read genome
+	do
+		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
+		check_gff.sh \$gff >> gff_checking.txt
+	done
+	# If one or several GFF files are not correct :
+	if grep -q ERROR gff_checking.txt
+	then
+		echo "ERROR : some GFF files are not formated as expected (see 'gff_checking.txt') :"
+		cat gff_checking.txt
+		exit 1
+	fi
+
+
+	# 3. Check the provided tree :
 	if [ $tree == "dummy" ]
 	then
 		# If '--tree' is not provided, make a dummy empty file.
@@ -90,7 +105,7 @@ process CHECK_INPUTS {
 	fi
 
 
-	# 3. Built a channel for the rest of the pipeline
+	# 4. Built a channel for the rest of the pipeline
 	cat valid_genomes.txt | while read genome
 	do
 		fasta=$gendir/\$( ls $gendir | grep \$genome | grep "\\.fas\$\\|\\.fna\$\\|\\.fasta\$\\|\\.fa\$" )
