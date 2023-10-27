@@ -140,7 +140,7 @@ process MRNA_TO_GENE {
 		
 	"""
 	chmod -R +x ${projectDir}/bin
-	
+
 	get_mRNA_parent.sh $gff > ${name}_mRNA_to_gene.tsv      
 	"""
 }
@@ -148,7 +148,7 @@ process MRNA_TO_GENE {
 
 process RECIPROCAL_BEST_HITS {
 
-	publishDir "${params.outdir}/orthologs"
+	publishDir "${params.outdir}/orthologs", mode: 'copy'
 	
 	input:
 		tuple val(focal_name), path(focal_mRNA_to_gene, stageAs : 'focal_mRNA_to_gene.tsv')

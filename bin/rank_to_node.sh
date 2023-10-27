@@ -5,7 +5,8 @@ TRG_rank=$3
 rank=""
 counter=0
 
-while [[ $rank != $TRG_rank ]] && [[ $rank != "no rank" ]] && [[ $counter -lt 100 ]]
+#while [[ $rank != $TRG_rank ]] && [[ $rank != "no rank" ]] && [[ $counter -lt 100 ]]
+while [[ $rank != $TRG_rank ]] && [[ $counter -lt 100 ]]
 do
 	old_taxid=$taxid
 	rank=$( grep -P "^${taxid}\t" ${taxdump}/nodes.dmp | sed -E "s/([0-9]+)\t\|\t([0-9]+)\t\|\t([^\t]+)\t.*/\3/")

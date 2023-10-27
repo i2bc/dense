@@ -795,6 +795,30 @@ def confirm_choice(message="Do you want to continue?"):
             print("Enter either yes/no")
 
 
+def verify_gff(in_path, out_path):
+    """
+    Writes a verified version of the given GFF file.
+    """
+    with open(out_path, 'w') as out :
+        with open(in_path  ) as inp :
+            for line in inp :
+                
+                if line[0] != "#":
+                    line_list = line.strip().split('\t')
+                    
+                    if int(line_list[3]) > int(line_list[4]) :
+#                        print(line)
+                        start=line_list[3]
+                        line_list[3]=line_list[4]
+                        line_list[4]=start
+#                        print("\t".join(line_list))
+                        out.write("\t".join(line_list)+'\n')
+                    else:
+                        out.write(line)
+                else :
+                    out.write(line)
+
+
 def check_synteny():
     """
     This is the main function of this program.
@@ -869,8 +893,19 @@ def check_synteny():
 
     # GFF files
     gffA_path = args.gffA
-
     gffB_path = args.gffB
+    
+    # Start cannot be greater than stop in BedTools
+    print("Building a verified version of the two GFF files...")
+    gffA_vf_path = "GFFA_verified.gff"
+    gffB_vf_path = "GFFB_verified.gff"
+
+    verify_gff( gffA_path, gffA_vf_path)
+    verify_gff( gffB_path, gffB_vf_path)
+    
+    gffA_path = gffA_vf_path
+    gffB_path = gffB_vf_path    
+
 
     # List of orthologous genes from A and B.
     orthologs_path = args.ortho

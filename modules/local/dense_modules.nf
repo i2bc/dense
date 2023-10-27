@@ -30,7 +30,7 @@ process CHECK_INPUTS {
 	# The list of non-empty files from 'gendir' :
 	gendirlist=\$(find ${gendir}/. -maxdepth 1 -not -empty -ls | awk '{print \$NF}')
 
-	echo "\${gendirlist}" | grep "\\.fna\$\\|\\.fasta\$\\|\\.fa\$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
+	echo "\${gendirlist}" | grep "\\.fas\$\\|\\.fna\$\\|\\.fasta\$\\|\\.fa\$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
 	echo "\${gendirlist}" | grep "\\.gff\$\\|\\.gff3\$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
 	
 	awk '
@@ -58,6 +58,7 @@ process CHECK_INPUTS {
 	
 	if [ -s problematic_genomes.txt ]
 	then
+		echo "WARNING : Each genome must be provided with one genomic FASTA file ('.fna','.fa','.fas','.fasta') and one GFF3 annotation file ('.gff3','.gff')"
 		echo "ERROR : some genomes seem to not have a single non-empty valid FASTA and GFF3 file (see 'problematic_genomes.txt', 'nb_fasta.txt', 'nb_gff.txt') :"
 		cat problematic_genomes.txt
 		exit 1
@@ -92,7 +93,7 @@ process CHECK_INPUTS {
 	# 3. Built a channel for the rest of the pipeline
 	cat valid_genomes.txt | while read genome
 	do
-		fasta=$gendir/\$( ls $gendir | grep \$genome | grep "\\.fna\$\\|\\.fasta\$\\|\\.fa\$" )
+		fasta=$gendir/\$( ls $gendir | grep \$genome | grep "\\.fas\$\\|\\.fna\$\\|\\.fasta\$\\|\\.fa\$" )
 		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
 		echo "\${PWD}/\${fasta}__,__\${PWD}/\${gff}" >> genome_files.txt
 	done
@@ -716,7 +717,7 @@ process CHECK_SYNTENY {
 
 	python --version
 	touch ${focal}_vs_${genome}_synteny.out ${focal}_vs_${genome}_synteny.tsv
-	check_synteny.py \
+	check_synteny_dev.py \
 	--gffA $focal_gff \
 	--gffB $genome_gff \
 	--ortho $orthologs \
