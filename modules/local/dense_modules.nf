@@ -732,7 +732,7 @@ process CHECK_SYNTENY {
 
 	python --version
 	touch ${focal}_vs_${genome}_synteny.out ${focal}_vs_${genome}_synteny.tsv
-	check_synteny_dev.py \
+	check_synteny.py \
 	--gffA $focal_gff \
 	--gffB $genome_gff \
 	--ortho $orthologs \
