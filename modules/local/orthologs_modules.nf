@@ -160,33 +160,24 @@ process RECIPROCAL_BEST_HITS {
 	"""
 	touch ${focal_name}_${neighbor_name}_orthologs.tsv
 
+	# Turn A_CDS_bh_B_CDS and B_CDS_bh_A_CDS to A_gene_bh_B_gene and B_gene_bh_A_gene_REV (the rev is to be able to search for exacte same lines)
 	awk '
-	BEGIN{FS=OFS="\t"}
-	
-	
-	FNR==1 {FNUM ++}
-	
-	FNUM==1 { genes_focal[\$1]=\$2 }
-	FNUM==2 { genes_neighbor[\$1]=\$2 }
-	
-	FNUM==3 {
-	
-		focal_gene = genes_focal[\$1]
-		neighbor_gene = genes_neighbor[\$2]
-		
-		best[focal_gene]=neighbor_gene
+		BEGIN {FS=OFS="\t"}
 
-	}
-	
-	FNUM==4 {
-	 
-		neighbor_gene = genes_neighbor[\$1]
-		focal_gene = genes_focal[\$2]
-		
-		if(best[focal_gene] == neighbor_gene) { print focal_gene, neighbor_gene }
-		
-	}
-	
-	' $focal_mRNA_to_gene $neighbor_mRNA_to_gene $focal_neighbor_best_hits $neighbor_focal_best_hits > ${focal_name}_${neighbor_name}_orthologs.tsv
+		FNR==1 {FNUM++}
+
+		FNUM==1 && NF==2 { A_gene[\$1]=\$2 }
+
+		FNUM==2 && NF==2 { B_gene[\$1]=\$2 }
+
+		FNUM==3 && NF==2 && (\$1 in A_gene) && (\$2 in B_gene) { print A_gene[\$1],B_gene[\$2] > "A_gene_vs_B_gene"     }
+
+		FNUM==4 && NF==2 && (\$2 in A_gene) && (\$1 in B_gene) { print A_gene[\$2],B_gene[\$1] > "B_gene_vs_A_gene_REV" }
+
+	' $focal_mRNA_to_gene $neighbor_mRNA_to_gene $focal_neighbor_best_hits $neighbor_focal_best_hits
+
+	# Search for exact same lines, and get unique lines
+	grep -Fxf A_gene_vs_B_gene B_gene_vs_A_gene_REV | \
+	awk -F"\t" '(!(\$0 in data)) { print \$0 ; data[\$0]=1 }' > ${focal_name}_${neighbor_name}_orthologs.tsv
 	"""
 }
