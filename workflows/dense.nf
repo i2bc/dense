@@ -167,6 +167,7 @@ include { ORTHOLOGS                  } from '../subworkflows/local/orthologs'
 include { CHECK_INPUTS               } from '../modules/local/dense_modules.nf'
 include { MRNA_TO_GENE               } from '../modules/local/orthologs_modules.nf'
 include { EXTRACT_CDS                } from '../modules/local/dense_modules.nf'
+include { TAXDUMP                    } from '../modules/local/dense_modules.nf'
 include { GENERA                     } from '../modules/local/dense_modules.nf'
 include { GENERA_FILTER              } from '../modules/local/dense_modules.nf'
 include { FIND_TRG                   } from '../modules/local/dense_modules.nf'
@@ -285,6 +286,10 @@ workflow DENSE {
 			.first()
 			.ifEmpty('EMPTY')
 
+			// If no taxdump was provided, download it.
+			// If possible in the projectDir so the user can reuse it with any run, otherwise in the workDir
+			TAXDUMP( taxdump )
+
 			// If the user has provided a precomputed genEra output,
 			if(params.genera_out){
 				genera_out_ch = file(params.genera_out)
@@ -304,14 +309,15 @@ workflow DENSE {
 						focal_ch
 						.map{ focal_name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_faa },
 						neighbor_CDS_taxids, 
-						file(params.genera_db)
+						file(params.genera_db),
+						TAXDUMP.out
 					  )
 				genera_out_ch = GENERA.out
 			}
 
 			GENERA_FILTER(
 						  genera_out_ch,
-						  taxdump,
+						  TAXDUMP.out,
 						  focal_taxid, 
 						  params.trg_rank,
 						  trg_node,

@@ -1,7 +1,7 @@
 #!/usr/bin/env nextflow
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    denovogenes
+    DENSE
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Github : https://github.com/XXX
     Website: https://XXX
@@ -51,7 +51,7 @@ nextflow.enable.dsl = 2
 include { DENSE } from './workflows/dense.nf'
 
 //
-// WORKFLOW: Run main denovogenes analysis pipeline
+// WORKFLOW: Run main DENSE analysis pipeline
 //
 workflow DENSE_WF {
     DENSE ()

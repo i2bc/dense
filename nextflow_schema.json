@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/denovogenes/master/nextflow_schema.json",
-    "title": "denovogenes pipeline parameters",
+    "title": "DENSE pipeline parameters",
     "description": "Identifies genes that have emerged de novo (from non-coding DNA).",
     "type": "object",
     "definitions": {

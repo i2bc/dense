@@ -30,8 +30,8 @@ process CHECK_INPUTS {
 	# The list of non-empty files from 'gendir' :
 	gendirlist=\$(find ${gendir}/. -maxdepth 1 -not -empty -ls | awk '{print \$NF}')
 
-	echo "\${gendirlist}" | grep -f $baseDir/data/fna_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
-	echo "\${gendirlist}" | grep -f $baseDir/data/gff3_ext.txt | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
+	echo "\${gendirlist}" | grep "\\.fas\$\\|\\.fna\$\\|\\.fasta\$\\|\\.fa\$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_fasta.txt
+	echo "\${gendirlist}" | grep "\\.gff\$\\|\\.gff3\$" | sed -E "s~.*/(.*)\\..*~\\1~" | sort | uniq -c > nb_gff.txt
 	
 	awk '
 		# Record every genome 
@@ -58,6 +58,7 @@ process CHECK_INPUTS {
 	
 	if [ -s problematic_genomes.txt ]
 	then
+		echo "WARNING : Each genome must be provided with one genomic FASTA file ('.fna','.fa','.fas','.fasta') and one GFF3 annotation file ('.gff3','.gff')"
 		echo "ERROR : some genomes seem to not have a single non-empty valid FASTA and GFF3 file (see 'problematic_genomes.txt', 'nb_fasta.txt', 'nb_gff.txt') :"
 		cat problematic_genomes.txt
 		exit 1
@@ -69,7 +70,22 @@ process CHECK_INPUTS {
 	echo ""
 
 
-	# 2. Check the provided tree :
+	# 2. Check that GFF files are GFF3 compliant and have "gene" and "mRNA" features.
+	cat valid_genomes.txt | while read genome
+	do
+		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
+		check_gff.sh \$gff >> gff_checking.txt
+	done
+	# If one or several GFF files are not correct :
+	if grep -q ERROR gff_checking.txt
+	then
+		echo "ERROR : some GFF files are not formated as expected (see 'gff_checking.txt') :"
+		cat gff_checking.txt
+		exit 1
+	fi
+
+
+	# 3. Check the provided tree :
 	if [ $tree == "dummy" ]
 	then
 		# If '--tree' is not provided, make a dummy empty file.
@@ -89,11 +105,11 @@ process CHECK_INPUTS {
 	fi
 
 
-	# 3. Built a channel for the rest of the pipeline
+	# 4. Built a channel for the rest of the pipeline
 	cat valid_genomes.txt | while read genome
 	do
-		fasta=$gendir/\$( ls $gendir | grep \$genome | grep -f $baseDir/data/fna_ext.txt )
-		gff=$gendir/\$( ls $gendir | grep \$genome | grep -f $baseDir/data/gff3_ext.txt )
+		fasta=$gendir/\$( ls $gendir | grep \$genome | grep "\\.fas\$\\|\\.fna\$\\|\\.fasta\$\\|\\.fa\$" )
+		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
 		echo "\${PWD}/\${fasta}__,__\${PWD}/\${gff}" >> genome_files.txt
 	done
 
@@ -113,6 +129,7 @@ process EXTRACT_CDS {
 		tuple val(name), path(fasta), path(gff), path("${fasta}.fai"), path("${name}_CDS.fna"), path("${name}_CDS.faa")
 
 	"""
+	chmod -R +x ${projectDir}/bin
 
 	# Use GffRead.
 
@@ -148,6 +165,42 @@ process EXTRACT_CDS {
 
 
 
+process TAXDUMP {
+
+	debug true
+
+	input:
+		path taxdump
+		
+	output:
+		env valid_taxdump
+		
+	"""
+	# If '--taxdump' is not provided,
+	if [ $taxdump == "dummy" ]
+	then
+		if [ ! -d ${workDir}/taxdump ]
+		then
+			# Download it
+			echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+		fi
+		valid_taxdump="${workDir}/taxdump"
+		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
+
+	else
+
+		# Just keep taxdump as it is.
+		echo "The user provided a taxdump directory. Using it."
+		valid_taxdump=$taxdump
+
+	fi
+	"""
+}
+
+
+
 process GENERA {
 
 	tag 'phylostratigraphy'
@@ -161,18 +214,12 @@ process GENERA {
 		path focal_CDS
 		path neighbors_CDS
 		path db
+		path taxdump
 		
 	output:
 		path "${focal_taxid}_gene_ages.tsv"
 		
 	"""
-	# If necessary, download the taxonomy dump from NCBI:
-	if [ ! -d $projectDir/taxdump ]
-	then
-		wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-		mkdir $projectDir/taxdump && tar zxf new_taxdump.tar.gz -C $projectDir/taxdump
-	fi
-
 	# -t taxID
 	# -q query fasta
 	# -n number of CPU to use
@@ -185,45 +232,9 @@ process GENERA {
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
 	-b $db/nr \
-	-d $projectDir/taxdump
+	-d $taxdump
 	"""
 }
-// process GENERA {
-
-// 	tag 'phylostratigraphy'
-
-// 	publishDir "${params.outdir}/genera_results"
-// 	container 'containers/genEra_v1.4.0.sif'
-// 	containerOptions "-B ${params.genera_db}"
-
-// 	cpus params.max_cpus
-
-// 	input:
-// 		val focal_taxid
-// 		path focal_CDS
-// 		path db
-// 		path a_option
-		
-// 	output:
-// 		path "${focal_taxid}_gene_ages.tsv"
-		
-// 	"""
-// 	# -t taxID
-// 	# -q query fasta
-// 	# -n number of CPU to use
-// 	# -b path to the nr database
-// 	# -r OR, the first time you use genEra : -d /path/to/taxdump/ \
-// 	# -x Temp dir (potentially hundreds of Go needed).
-// 	genEra \
-// 	-t $focal_taxid \
-// 	-q $focal_CDS \
-// 	-n ${task.cpus} \
-// 	-b $db/nr \
-// 	$a_option
-// 	#-a $neighbors_CDS \
-// 	#-r $baseDir/data/ncbi_lineages.csv
-// 	"""
-// }
 
 
 
@@ -246,25 +257,8 @@ process GENERA_FILTER {
 	"""
 	if [[ $taxid == "EMPTY" ]]; then echo "The focal taxid could not be found!"; exit 1 ; fi
 
+
 	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
-
-
-	#### If necessary, download taxdump/ : ##############################################
-	# If '--taxdump' is not provided,
-	if [ $taxdump == "dummy" ]
-	then
-		# If there is not already such a directory in the workflow dir,
-		if [ ! -d $baseDir/taxdump ]
-		then
-			# Download it
-			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-			mkdir -p $baseDir/taxdump && tar zxf new_taxdump.tar.gz -C $baseDir/taxdump
-		fi
-		valid_taxdump="$baseDir/taxdump"
-	else
-		valid_taxdump=$taxdump
-	fi
-	#####################################################################################
 
 
 	# First, find the nodes ("ages") to characterize TRGs.
@@ -273,10 +267,10 @@ process GENERA_FILTER {
 	# if TRG_node is "Mammalia" then all CDS no older than "Mammalia" are considered as TRG, 
 	# including "Mammalia" but also "Primates", and so on...
 
-	if [ $TRG_node == "null" ]
+	if [ \$(echo "${TRG_node}" | wc -w ) -eq 1 ] && [ ${TRG_node} == "null" ]
 	then
 		echo "As no TRG_node was provided, using TRG_rank (${TRG_rank})."
-		TRG_node=\$(rank_to_node.sh \$valid_taxdump $taxid $TRG_rank)
+		TRG_node=\$(rank_to_node.sh $taxdump $taxid $TRG_rank)
 	else
 		echo "Using TRG_node to filter CDS."
 		TRG_node=$TRG_node
@@ -288,7 +282,7 @@ process GENERA_FILTER {
 	awk -v taxid="${taxid}" '
 		BEGIN{FS=OFS="\t\\\\|\t"}
 		\$1 == taxid {print \$3\$2}
-	' \$valid_taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
+	' $taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
 	awk -v TRG_node="\${TRG_node}" '
 		BEGIN{FS="; "}
 		NR==1 {
@@ -432,6 +426,8 @@ process MULTIELONGATE_FOCAL_TRG {
 		path "TRG_multielongated.faa", emit : TRG_multielongated_faa
 		
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	# Generate a FASTA with the CDS of the focal genome, elongated by 100 nucleotides up and downstream :
 	
 	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_0
@@ -472,6 +468,7 @@ process ELONGATE_CDS {
 		tuple val(name), path(gfasta), path("CDS_elongated.faa")
 		
 	"""
+	chmod -R +x ${projectDir}/bin
 
 	## In order to search for homologous CDS in the genome, get a FASTA with the elongated CDS of the genome (100 nucl upstream and downstream).
 	# In case of multi matchs, the one with the best evalue is more likely to be the right one with this elongated version (bring genomic context).
@@ -603,6 +600,7 @@ process BLAST_FILTER {
 		tuple val(genome_name), path('TRG_blast_*_best_hits.tsv')
 		
 	"""
+	chmod -R +x ${projectDir}/bin
 
 	# Get the list of homologs (CDS and whole_genome) for each genome.
 	
@@ -648,6 +646,8 @@ process TREE_DISTANCES {
 		path "tree_distances.tsv"
 
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	tree_distances.py -tree $tree -focal $focal -out tree_distances.tsv 
 	"""
 }
@@ -728,6 +728,8 @@ process CHECK_SYNTENY {
 		tuple path("${focal}_vs_${genome}_synteny.out"), path("${focal}_vs_${genome}_synteny.tsv")
 		
 	"""
+	chmod -R +x ${projectDir}/bin
+
 	python --version
 	touch ${focal}_vs_${genome}_synteny.out ${focal}_vs_${genome}_synteny.tsv
 	check_synteny.py \
