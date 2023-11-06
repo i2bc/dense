@@ -408,7 +408,9 @@ process FIND_TRG {
 			exit 1
 		fi
 	else
-		grep ">" $CDS_fna | shuf -n 50 | sed "s/>//" > TRGs.txt
+		//grep ">" $CDS_fna | shuf -n 50 | sed "s/>//" > TRGs.txt
+		echo "ERROR : ${TRG_list} does not exist or is empty."
+		exit 1
 	fi
 	"""
 }

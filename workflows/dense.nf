@@ -53,7 +53,7 @@ if (params.trg_node && params.trg_rank) {
 }
 
 if (params.trgs) {
-	for (key in ['genera_out', 'genera_db', 'taxids', 'trg_node', 'trg_rank']) {
+	for (key in ['genera_out', 'genera_db', 'taxids', 'trg_node']){//, 'trg_rank']) {
 		if(params[key]){
 			log.info "'--trgs' and '--${key}' are not compatible."
 			stop = true
