@@ -380,7 +380,7 @@ process FIND_TRG {
 		path(TRG_list)
 		tuple val(genome_name), path(gfasta), path(gff), path(fai), path(CDS_fna), path(CDS_faa)
 	output:
-		path("TRGs.txt")
+		path("TRG.txt")
 		
 	"""
 	# Get the CDS list in a text file (already unique with gffread).
@@ -408,7 +408,6 @@ process FIND_TRG {
 			exit 1
 		fi
 	else
-		//grep ">" $CDS_fna | shuf -n 50 | sed "s/>//" > TRGs.txt
 		echo "ERROR : ${TRG_list} does not exist or is empty."
 		exit 1
 	fi
