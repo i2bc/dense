@@ -70,7 +70,7 @@ process CHECK_INPUTS {
 	echo ""
 
 
-	# 2. Check that GFF files are GFF3 compliant and have "gene" and "mRNA" features.
+	# 2. Check that GFF files are GFF3 compliant and have "CDS", "gene", and "mRNA" features.
 	cat valid_genomes.txt | while read genome
 	do
 		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
@@ -417,6 +417,25 @@ process FIND_TRG {
 
 
 
+process TRG_FNA {
+
+	input:
+		path CDS_fna
+		path TRGs
+		
+	output:
+		path "TRG.fna"
+		
+	"""
+	chmod -R +x ${projectDir}/bin
+
+	faSomeRecords $CDS_fna $TRGs TRG.fna
+	"""
+}
+
+
+
+
 process MULTIELONGATE_FOCAL_TRG {
 
 	input:
@@ -431,28 +450,24 @@ process MULTIELONGATE_FOCAL_TRG {
 
 	# Generate a FASTA with the CDS of the focal genome, elongated by 100 nucleotides up and downstream :
 	
-	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_0
-	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_1
-	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_2
-	# 100_nucl_translated_in_frame_1____translated_CDS____100_nucl_translated_in_frame_0
-	# 100_nucl_translated_in_frame_1____translated_CDS____100_nucl_translated_in_frame_1
-	# 100_nucl_translated_in_frame_1____translated_CDS____100_nucl_translated_in_frame_2
-	# 100_nucl_translated_in_frame_2____translated_CDS____100_nucl_translated_in_frame_0
-	# 100_nucl_translated_in_frame_2____translated_CDS____100_nucl_translated_in_frame_1
-	# 100_nucl_translated_in_frame_2____translated_CDS____100_nucl_translated_in_frame_2
+	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_0
+	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_1
+	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_2
+	# 99_nucl_translated_in_frame_1____translated_CDS____99_nucl_translated_in_frame_0
+	# 99_nucl_translated_in_frame_1____translated_CDS____99_nucl_translated_in_frame_1
+	# 99_nucl_translated_in_frame_1____translated_CDS____99_nucl_translated_in_frame_2
+	# 99_nucl_translated_in_frame_2____translated_CDS____99_nucl_translated_in_frame_0
+	# 99_nucl_translated_in_frame_2____translated_CDS____99_nucl_translated_in_frame_1
+	# 99_nucl_translated_in_frame_2____translated_CDS____99_nucl_translated_in_frame_2
 	
-
-	# TRG FASTA
-	grep -x -f <(sed "s/^/>/" $TRGs) $CDS_faa -A1 --no-group-separator > TRG.faa
-
-	# TRG multielongated FASTA
-	bash get_CDS_borders.sh \\
-	--gfasta $gfasta \\
-	--gff $gff \\
-	--genome $fai \\
-	--size 100 \\
-	--multiframe True
-
+	extend_cds.py \
+	--gfasta $gfasta \
+	--fai $fai \
+	--gff $gff \
+	--cds $TRGs \
+	--size 99 \
+	--mode multi \
+	--out TRG_multielongated.faa
 	"""
 }
 
@@ -475,13 +490,14 @@ process ELONGATE_CDS {
 	# In case of multi matchs, the one with the best evalue is more likely to be the right one with this elongated version (bring genomic context).
 	
 	# Generate the elongated translated CDS FASTA.
-	bash get_CDS_borders.sh \\
-	--gfasta $gfasta \\
-	--gff $gff \\
-	--genome $fai \\
-	--size 100 \\
-	--multiframe False
-
+	extend_cds.py \
+	--gfasta $gfasta \
+	--fai $fai \
+	--gff $gff \
+	--cds $CDS_fna \
+	--size 99 \
+	--mode simple \
+	--out CDS_elongated.faa
 	"""
 }
 
@@ -548,7 +564,7 @@ process TRGS_BEFORE_STRATEGY {
 			/# Query:/ {
 				CDS=gensub(/# Query:\s(.*)/,"\\\\1","g",\$0)
 				# If the case where the CDS is elongated
-				short=gensub(/_elongated_F.*/,"","g",CDS)
+				short=gensub(/_elongated.*/,"","g",CDS)
 				if(!(short in data)){
 					print short
 					data[short]=1
@@ -559,7 +575,7 @@ process TRGS_BEFORE_STRATEGY {
 		# BLAST format 6 (diamond includes every query including those without any match)
 		awk -F"\t" '
 			\$0 !~ /^#/ {
-				short=gensub(/_elongated_F.*/,"","g",\$1)
+				short=gensub(/_elongated.*/,"","g",\$1)
 				if(!(short in data)){
 					print short
 					data[short]=1
@@ -707,7 +723,7 @@ process CHECK_SYNTENY_INPUTS {
 		
 		\$5 == "CDS" { data[\$2\$3] = 1 }
 		\$5== "genome" && (!(\$2\$3 in data)) { 
-			print gensub(/_elongated/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
+			print gensub(/_elongated.*/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
 	"""
 }
 
@@ -792,7 +808,7 @@ process SYNTENY_TO_TABLE {
 		# then
 		FILENAME == TRG_table && FNR != 1 {
 
-			query = gensub(/_elongated/,"","g",\$2)
+			query = gensub(/_elongated.*/,"","g",\$2)
 			neighbor = \$3
 			target = \$4
 
@@ -897,7 +913,7 @@ process FILTER_TABLE_WITH_STRATEGY {
 	fi
 
 	# Remove the possible "_elongated" extension
-	sed -i "s/_elongated//" TRGs_selected_before_isoform_control.txt
+	sed -i "s/_elongated.*//" TRGs_selected_before_isoform_control.txt
 	"""
 }
 

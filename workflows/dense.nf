@@ -171,6 +171,7 @@ include { TAXDUMP                    } from '../modules/local/dense_modules.nf'
 include { GENERA                     } from '../modules/local/dense_modules.nf'
 include { GENERA_FILTER              } from '../modules/local/dense_modules.nf'
 include { FIND_TRG                   } from '../modules/local/dense_modules.nf'
+include { TRG_FNA                    } from '../modules/local/dense_modules.nf'
 include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/dense_modules.nf'
 include { ELONGATE_CDS               } from '../modules/local/dense_modules.nf'
 include { BLAST                      } from '../modules/local/dense_modules.nf'
@@ -252,7 +253,7 @@ workflow DENSE {
 		.map { name, fasta, gff -> [ name,
 									 file("${params.trgsblastdir}/TRG_multielongated_blastp_${name}_CDS_elongated.out"),
 									 file("${params.trgsblastdir}/TRG_multielongated_tblastn_${name}_genome.out")
-								   ] 
+								   ]
 			 }
 
 	} else {
@@ -329,31 +330,35 @@ workflow DENSE {
 
 		// Then, now that we have the TRGs, find their homologs in the neighbor genomes.
 
+		TRG_FNA(
+				focal_ch.map{ focal_name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_fna },
+				TRG_ch
+				)
 		// To maximize the chances to find true homologs, all sequences (the TRG and the CDS of neighbor genomes) are elongated :
 		// 100 nucleotides are added on each sides of each sequence.
 		
 		// The elongated parts of the TRG (of the genome of interest), are translated into the 3 possible frames to 'allow' two frameshifts in the neighbor.
 		// Ad the end, 9 sequences (AA) are generated for each TRG.
 		MULTIELONGATE_FOCAL_TRG( 
-								TRG_ch,
+								TRG_FNA.out,
 								focal_ch
 								)
 
 		// Also get an elongated version of the trasnlated CDS for every genome (subjects).
 		ELONGATE_CDS( EXTRACT_CDS.out )
-			
+	}
+
 		// Search for homologs of the focal's TRG among :
 		// 	-the CDS (blastp),
 		//	-the entiere genome (tblastn),
 		// of each neighbor genome.
 		// TRG collection
 		BLAST	(	
-				 MULTIELONGATE_FOCAL_TRG.out.TRG_multielongated_faa.first(),
+				 MULTIELONGATE_FOCAL_TRG.out.first(),
 				 ELONGATE_CDS.out
 				)
 		BLAST_out_ch = BLAST.out
 
-	}
 
 	// Get a list with all TRGs before additionnal filtering
 	TRGS_BEFORE_STRATEGY( 
