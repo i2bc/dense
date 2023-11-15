@@ -273,7 +273,7 @@ process GENERA_FILTER {
 		TRG_node=\$(rank_to_node.sh $taxdump $taxid $TRG_rank)
 	else
 		echo "Using TRG_node to filter CDS."
-		TRG_node=$TRG_node
+		TRG_node="${TRG_node}"
 	fi
 
 	echo "TRG_node is now set to '\${TRG_node}'."
@@ -738,6 +738,7 @@ process CHECK_SYNTENY {
 	// memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
 	
 	input:
+		val anch_nb
 		tuple val(focal), path(focal_gff, stageAs:'focal_gff.gff')
 		tuple val(genome), path(genome_gff), path(orthologs), path(input_pairs)
 		
@@ -754,8 +755,8 @@ process CHECK_SYNTENY {
 	--gffB $genome_gff \
 	--ortho $orthologs \
 	--list $input_pairs \
-	--flankA 2 \
-	--flankB 4 \
+	--flankA $anch_nb \
+	--flankB $anch_nb \
 	--up_min 1 \
 	--ov_min 0 \
 	--do_min 1 \

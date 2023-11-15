@@ -82,6 +82,10 @@ if (params.synteny && ! synt_strats.contains(params.strategy)) {
 	log.info "There is no synteny check to perform with strategy ${params.strategy} since there no homolog detection (see '--strategy' and '--synteny')."
 	stop = true
 }
+if (params.synteny && ! params.anchors) {
+	log.info "You need to provide the number of anchor genes to collect to check the synteny (see '--anchors' and '--synteny')."
+	stop = true
+}
 
 for (key in ['orthodir', 'blastdir']) {
 	if (params[key] && ! synt_strats.contains(params.strategy)) {
@@ -117,23 +121,6 @@ if(params.taxdump){
 if(!params.trg_node){ trg_node = "null"} else { trg_node = params.trg_node }
 
 // TRG list file
-// if ( params.containsKey('trgs') && (params.trgs instanceof String) && params.trgs != "null") {
-// 	if (file(params.trgs).exists()){
-// 		if(file(params.trgs).isEmpty()){
-// 			log.info "WARNING : '${params.trgs}' is empty (see the '--trgs' option)"
-// 			System.exit(0)
-// 		} else {
-// 			log.info "A list of TRG was provided with '${params.trgs}'."
-// 			TRG_file = params.trgs
-// 		}
-// 	} else {
-// 		log.info "WARNING : '${params.trgs}' not found (see the '--trgs' option)"
-// 		System.exit(0)
-// 	}
-// } else { 
-// 	log.info "No list of TRGs provided."
-// 	TRG_file = file("dummy")
-// }
 if (params.trgs) {
 	if (file(params.trgs).exists()){
 		if(file(params.trgs).isEmpty()){
@@ -461,6 +448,7 @@ workflow DENSE {
 
 		// Test if synteny is conserved between the TRG genomic environment and the one of its noncoding outgroup.
 		CHECK_SYNTENY(
+					  params.anchors,
 					  focal_synteny_ch,
 					  synteny_main_ch
 					 )
