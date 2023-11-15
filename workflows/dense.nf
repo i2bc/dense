@@ -346,7 +346,6 @@ workflow DENSE {
 
 		// Also get an elongated version of the trasnlated CDS for every genome (subjects).
 		ELONGATE_CDS( EXTRACT_CDS.out )
-	}
 
 		// Search for homologs of the focal's TRG among :
 		// 	-the CDS (blastp),
@@ -358,7 +357,7 @@ workflow DENSE {
 				 ELONGATE_CDS.out
 				)
 		BLAST_out_ch = BLAST.out
-
+	}
 
 	// Get a list with all TRGs before additionnal filtering
 	TRGS_BEFORE_STRATEGY( 

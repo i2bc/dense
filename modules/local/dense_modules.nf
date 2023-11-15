@@ -1,5 +1,5 @@
 process TEST {
-	tag "Super test trop bien"
+	tag "Super test"
 	debug true
 
 	"""
@@ -842,78 +842,7 @@ process FILTER_TABLE_WITH_STRATEGY {
 		path "TRGs_selected_before_isoform_control.txt"
 		
 	"""
-	echo -n "strategy : ${strategy}"
-	
-	# Filter TRGs according to the selected strategy (see the Help section)
-
-	if [ $strategy == 1 ]
-	then
-		awk '
-
-			BEGIN { FS=OFS="\t" }
-
-			# If this is a CDS match and there is no recorded farest CDS match, OR
-			# If this is a CDS match and the root distance is lower than what is recorded for this TRG,
-			# then record it as the farest CDS match.
-			\$5=="CDS" && ( (!(\$2 in farest_CDS)) || (\$7 < farest_CDS[\$2]) ){ farest_CDS[\$2]=\$7 }
-
-			# If this is a genome match and there is no recorded farest CDS match, OR
-			# If this is a genome match and the root distance is lower than the farest CDS match for this TRG, print (keep) the line.
-			\$5=="genome" && ( (!(\$2 in farest_CDS)) || (\$7 < farest_CDS[\$2]) )
-
-		' ${TRG_table} > TRG_selected_before_synteny_check.tsv
-	fi
-
-
-	if [ $strategy == 2 ]
-	then
-		awk '
-
-			BEGIN { FS=OFS="\t" }
-
-			# If this is a CDS match, record the TRG-genome pair.
-			\$5=="CDS" { CDS_match[\$2\$3] = 1 }
-
-			# If this is a genome match and the TRG-genome pair does is not recorded, print (keep) the line.
-			\$5=="genome" && (!(\$2\$3 in CDS_match))
-
-		' ${TRG_table} > TRG_selected_before_synteny_check.tsv
-	fi
-
-
-	# If synteny checking is on, only keep TRG with lines with isSynt == "True"
-	if [ $synteny == "true" ]
-	then
-		touch TRGs_selected_before_isoform_control.txt
-		awk 'BEGIN {FS=OFS="\t"} \$8 == "True" {print \$2}' TRG_selected_before_synteny_check.tsv > TRGs_selected_before_isoform_control.txt
-	else
-		awk 'BEGIN {FS=OFS="\t"} {print \$2}' TRG_selected_before_synteny_check.tsv > TRGs_selected_before_isoform_control.txt
-	fi
-
-
-	if [ $strategy == 3 ]
-	then
-		awk -v focal="${focal}" '
-			BEGIN{FS=OFS="\t"}
-
-			# If there is any match outiside the focal genome itself, the CDS is to remove.
-			\$3 != focal { toremove[\$2]=1 }
-
-			{ all[\$2]=1}
-
-			# Only print CDS that are not to remove
-			END {
-				for(TRG in all){
-					if(!(TRG in toremove)){
-						print TRG
-					}
-				}
-			}
-		' ${TRG_table} > TRGs_selected_before_isoform_control.txt
-	fi
-
-	# Remove the possible "_elongated" extension
-	sed -i "s/_elongated.*//" TRGs_selected_before_isoform_control.txt
+	filter_table_with_strategy.py --table $TRG_table --strategy $strategy --synteny $synteny --out TRGs_selected_before_isoform_control.txt
 	"""
 }
 
