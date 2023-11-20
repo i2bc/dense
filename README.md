@@ -2,6 +2,10 @@
 
 ## Introduction
 
+**WARNING : THIS REPOSITORY IS under CONSTRUCTION**
+** BOTH DOCUMENTATION AND SCRIPTS ARE NOT COMPLETED OR UP TO DATE**
+** PLEASE WAIT FOR EARLY 2024 **
+
 **DENSE** is a bioinformatics pipeline that finds genes that have emerged *de novo* (e.i. from non-coding DNA).
 
 It uses a genome of interest and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files).
