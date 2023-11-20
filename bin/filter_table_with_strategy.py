@@ -7,7 +7,6 @@ Created on Tue Nov 14 14:55:42 2023
 """
 
 import argparse
-import re
 
 
 def filter_table(table_path, strategy, out_path, check_synteny=False):
@@ -125,7 +124,7 @@ def filter_table(table_path, strategy, out_path, check_synteny=False):
             for trg in table_dic:
                 # If there is not match outside of the focal (strict orphan)
                 if table_dic[trg] == []:
-                    trg=re.sub(r"_elongated.*", "", trg)
+                    trg=trg.rsplit('_elongated', 1)[0]
                     out.write(f"{trg}\n")
 
 
