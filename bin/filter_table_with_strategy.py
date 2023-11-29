@@ -7,7 +7,7 @@ Created on Tue Nov 14 14:55:42 2023
 """
 
 import argparse
-
+import re
 
 def filter_table(table_path, strategy, out_path, check_synteny=False):
     """
