@@ -1,17 +1,3 @@
-process TEST {
-	tag "Super test"
-	debug true
-
-	"""
-	python --version
-	awk -V
-	"""
-
-}
-
-
-
-
 process CHECK_INPUTS {
 
 	input:
@@ -119,8 +105,6 @@ process CHECK_INPUTS {
 }
 
 
-
-
 process EXTRACT_CDS {
 
 	input:
@@ -163,8 +147,6 @@ process EXTRACT_CDS {
 }
 
 
-
-
 process TAXDUMP {
 
 	debug true
@@ -198,7 +180,6 @@ process TAXDUMP {
 	fi
 	"""
 }
-
 
 
 process GENERA {
@@ -237,139 +218,25 @@ process GENERA {
 }
 
 
-
-
 process GENERA_FILTER {
 
-	publishDir "${params.outdir}/genera_results"
+        publishDir "${params.outdir}/genera_results"
 
-	input:
-		path genera_out
-		path taxdump
-		val taxid
-		val TRG_rank
-		val TRG_node
-		path focal_mRNA_to_gene
+        input:
+            path taxdump
+            val taxid
+            val TRG_node
+            val TRG_rank
+            path mapping
+            path genera_out
 
-	output:
-		path 'TRGs.txt'
-		
-	"""
-	if [[ $taxid == "EMPTY" ]]; then echo "The focal taxid could not be found!"; exit 1 ; fi
+        output:
+            path 'TRG_CDS.txt'
 
-
-	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
-
-
-	# First, find the nodes ("ages") to characterize TRGs.
-	
-	# 'TRG_node' is the node where TRGs "start", in other words : 
-	# if TRG_node is "Mammalia" then all CDS no older than "Mammalia" are considered as TRG, 
-	# including "Mammalia" but also "Primates", and so on...
-
-	if [ \$(echo "${TRG_node}" | wc -w ) -eq 1 ] && [ ${TRG_node} == "null" ]
-	then
-		echo "As no TRG_node was provided, using TRG_rank (${TRG_rank})."
-		TRG_node=\$(rank_to_node.sh $taxdump $taxid $TRG_rank)
-	else
-		echo "Using TRG_node to filter CDS."
-		TRG_node="${TRG_node}"
-	fi
-
-	echo "TRG_node is now set to '\${TRG_node}'."
-
-
-	awk -v taxid="${taxid}" '
-		BEGIN{FS=OFS="\t\\\\|\t"}
-		\$1 == taxid {print \$3\$2}
-	' $taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
-	awk -v TRG_node="\${TRG_node}" '
-		BEGIN{FS="; "}
-		NR==1 {
-			for (i=1;i<=NF;i++){
-				if(\$i == TRG_node){
-					goprint = 1
-				}
-				if(goprint){ print \$i }
-			}
-		}
-	' > TRG_nodes.txt # This is the list of nodes that will be used to detect TRGs.
-
-
-	#### Filter genera output ####
-	
-	# Only keep CDS that are "young".
-	# Remove any CDS whith an "old" isoforme. 
-	awk '
-		BEGIN {FS=OFS="\t"}
-
-		# First file : focal_mRNA_to_gene
-		FNR==NR { genes[\$1]=\$2 }
-
-		# Second file : genEra output
-		FNR!=NR {
-
-			if(\$1 in genes){
-				print \$0, genes[\$1]
-			} else {
-				if(FNR != 1) { print "WARNING : NO gene associated with "\$1"!" }
-			}
-		}
-	' $focal_mRNA_to_gene $genera_out > genEra_output_with_genes.tsv
-
-	awk '
-		BEGIN {FS=OFS="\t"}
-
-		# First file : TRG_nodes.txt
-		FNR==NR { TRG_nodes[\$0]=1 }
-
-		# Second file : genEra_output_with_genes.tsv
-		FNR!=NR {
-
-			# If the gene is NOT already know as old,
-			if (!(\$NF in old_genes)) {
-
-				# If the current CDS is old
-				if (!(\$2 in TRG_nodes)) {
-
-					# Add it to the old genes
-					old_genes[\$NF] = 1
-
-					# Delete its key from the young_genes
-					delete young_genes[\$NF]
-				}
-				# If the current CDS is young
-				else {
-					young_genes[\$NF][\$1]=1
-				}
-			}
-		}
-
-		END {
-			for(gene in young_genes){
-				for(CDS in young_genes[gene]){
-					print CDS
-				}
-			}
-		}
-
-	' TRG_nodes.txt genEra_output_with_genes.tsv > TRGs.txt
-
-	# Also filter without taking into account isoformes
-	awk '
-		BEGIN {FS=OFS="\t"}
-
-		# First file : TRG_nodes.txt
-		FNR==NR { TRG_nodes[\$1]=1 }
-
-		# Second file : genEra output
-		FNR!=NR && \$2 in TRG_nodes { print \$0 }
-
-	' TRG_nodes.txt genEra_output_with_genes.tsv > TRGs_without_isoforms_correction.tsv
-	"""
-}
-
-
+        """
+        genEra_filter.py '$taxdump' '$taxid' '$TRG_node' '$TRG_rank' '$mapping' '$genera_out'
+        """
+    }
 
 
 process FIND_TRG {
@@ -415,8 +282,6 @@ process FIND_TRG {
 }
 
 
-
-
 process TRG_FNA {
 
 	input:
@@ -432,8 +297,6 @@ process TRG_FNA {
 	faSomeRecords $CDS_fna $TRGs TRG.fna
 	"""
 }
-
-
 
 
 process MULTIELONGATE_FOCAL_TRG {
@@ -472,8 +335,6 @@ process MULTIELONGATE_FOCAL_TRG {
 }
 
 
-
-
 process ELONGATE_CDS {
 
 	input:
@@ -500,8 +361,6 @@ process ELONGATE_CDS {
 	--out CDS_elongated.faa
 	"""
 }
-
-
 
 
 process BLAST {
@@ -543,8 +402,6 @@ process BLAST {
 	
 	"""
 }
-
-
 
 
 process TRGS_BEFORE_STRATEGY {
@@ -605,8 +462,6 @@ process TRGS_BEFORE_STRATEGY {
 }
 
 
-
-
 process BLAST_FILTER {
 
 	input:
@@ -630,8 +485,6 @@ process BLAST_FILTER {
 }
 
 
-
-
 process DUMMY_DISTANCES {
 
 	input:
@@ -652,8 +505,6 @@ process DUMMY_DISTANCES {
 }
 
 
-
-
 process TREE_DISTANCES {
 
 	input:
@@ -668,8 +519,6 @@ process TREE_DISTANCES {
 	tree_distances.py -tree $tree -focal $focal -out tree_distances.tsv 
 	"""
 }
-
-
 
 
 process TRG_TABLE {
@@ -705,8 +554,6 @@ process TRG_TABLE {
 }
 
 
-
-
 process CHECK_SYNTENY_INPUTS {
 
 	input:
@@ -726,8 +573,6 @@ process CHECK_SYNTENY_INPUTS {
 			print gensub(/_elongated.*/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
 	"""
 }
-
-
 
 
 process CHECK_SYNTENY {
@@ -768,8 +613,6 @@ process CHECK_SYNTENY {
 	--out ${focal}_vs_${genome}_synteny
 	"""
 }
-
-
 
 
 process SYNTENY_TO_TABLE {
@@ -829,8 +672,6 @@ process SYNTENY_TO_TABLE {
 }
 
 
-
-
 process FILTER_TABLE_WITH_STRATEGY {
 
 	input:
@@ -846,8 +687,6 @@ process FILTER_TABLE_WITH_STRATEGY {
 	filter_table_with_strategy.py --table $TRG_table --strategy $strategy --synteny $synteny --out TRGs_selected_before_isoform_control.txt
 	"""
 }
-
-
 
 
 process FILTER_ISOFORMS {
@@ -890,8 +729,6 @@ process FILTER_ISOFORMS {
 	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
 	"""
 }
-
-
 
 
 process WARN_MISSING {

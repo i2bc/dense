@@ -172,7 +172,6 @@ include { CHECK_SYNTENY              } from '../modules/local/dense_modules.nf'
 include { SYNTENY_TO_TABLE           } from '../modules/local/dense_modules.nf'
 include { FILTER_TABLE_WITH_STRATEGY } from '../modules/local/dense_modules.nf'
 include { FILTER_ISOFORMS            } from '../modules/local/dense_modules.nf'
-include { TEST                       } from '../modules/local/dense_modules.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -181,9 +180,6 @@ include { TEST                       } from '../modules/local/dense_modules.nf'
 */
 
 workflow DENSE {
-//workflow {
-
-	// TEST()
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -227,6 +223,9 @@ workflow DENSE {
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	Get the TRGs and their homologous sequences (CDS or genomic intervals)
+
+	In this workflow, the term "TRG" is used to refer to the coding sequences (CDS) of taxonomically restricted genes (TRG) from the focal genome.
+	One single taxonomically restricted gene can have several isoforms (i.e. several CDS) that will all be reffered as "TRG".
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 
@@ -304,12 +303,12 @@ workflow DENSE {
 			}
 
 			GENERA_FILTER(
-						  genera_out_ch,
 						  TAXDUMP.out,
 						  focal_taxid, 
-						  params.trg_rank,
 						  trg_node,
-						  focal_mRNA_to_gene_ch
+						  params.trg_rank,
+						  focal_mRNA_to_gene_ch,
+						  genera_out_ch
 						 )
 			TRG_ch = GENERA_FILTER.out
 		} 
