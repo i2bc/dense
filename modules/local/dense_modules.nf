@@ -236,7 +236,7 @@ process GENERA_FILTER {
         """
         genEra_filter.py '$taxdump' '$taxid' '$TRG_node' '$TRG_rank' '$mapping' '$genera_out'
         """
-    }
+}
 
 
 process FIND_TRG {
@@ -404,16 +404,17 @@ process BLAST {
 }
 
 
-process TRGS_BEFORE_STRATEGY {
+process TRG_LIST_BEFORE_STRATEGY {
 
 	input:
 		tuple val(genome_name), path(TRG_multielongated_blastp_CDS_elongated_out), path(TRG_multielongated_tblastn_genome_out)
 		path focal_mRNA_to_gene
 		
 	output:
-		path 'TRGs_genes_before_strategy.tsv'
+		path 'TRG_before_strategy.tsv'
 		
 	"""
+	# Get the list of TRGs before applying the selection strategy.
 	if grep -q "# Query:" $TRG_multielongated_blastp_CDS_elongated_out
 	then
 		# BLAST format 7
@@ -427,9 +428,9 @@ process TRGS_BEFORE_STRATEGY {
 					data[short]=1
 				}
 			}
-		' $TRG_multielongated_blastp_CDS_elongated_out > TRGs_before_strategy.txt
+		' $TRG_multielongated_blastp_CDS_elongated_out > TRG_CDS_before_strategy.txt
 	else
-		# BLAST format 6 (diamond includes every query including those without any match)
+		# BLAST format 6 (diamond includes every query including those without any match) ## NOT IMPLEMENTED ##
 		awk -F"\t" '
 			\$0 !~ /^#/ {
 				short=gensub(/_elongated.*/,"","g",\$1)
@@ -438,7 +439,7 @@ process TRGS_BEFORE_STRATEGY {
 					data[short]=1
 				}
 			}
-		' $TRG_multielongated_blastp_CDS_elongated_out > TRGs_before_strategy.txt
+		' $TRG_multielongated_blastp_CDS_elongated_out > TRG_CDS_before_strategy.txt
 
 	fi
 
@@ -457,7 +458,7 @@ process TRGS_BEFORE_STRATEGY {
 				if(FNR != 1) { print "WARNING : NO gene associated with "\$1"!" }
 			}
 		}
-	' $focal_mRNA_to_gene TRGs_before_strategy.txt > TRGs_genes_before_strategy.tsv
+	' $focal_mRNA_to_gene TRG_CDS_before_strategy.txt > TRG_before_strategy.tsv
 	"""
 }
 

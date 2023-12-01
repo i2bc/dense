@@ -162,7 +162,7 @@ include { TRG_FNA                    } from '../modules/local/dense_modules.nf'
 include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/dense_modules.nf'
 include { ELONGATE_CDS               } from '../modules/local/dense_modules.nf'
 include { BLAST                      } from '../modules/local/dense_modules.nf'
-include { TRGS_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
+include { TRG_LIST_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
 include { BLAST_FILTER               } from '../modules/local/dense_modules.nf'
 include { DUMMY_DISTANCES            } from '../modules/local/dense_modules.nf'
 include { TREE_DISTANCES             } from '../modules/local/dense_modules.nf'
@@ -346,7 +346,7 @@ workflow DENSE {
 	}
 
 	// Get a list with all TRGs before additionnal filtering
-	TRGS_BEFORE_STRATEGY( 
+	TRG_LIST_BEFORE_STRATEGY( 
 						 BLAST_out_ch.first(),
 						 focal_mRNA_to_gene_ch
  						)
@@ -479,7 +479,7 @@ workflow DENSE {
 
 	// Remove TRGs with any isoform that has been filtered out by applying the strategy.
 	FILTER_ISOFORMS(
-					TRGS_BEFORE_STRATEGY.out,
+					TRG_LIST_BEFORE_STRATEGY.out,
 					FILTER_TABLE_WITH_STRATEGY.out
 				    )
 }
