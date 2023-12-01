@@ -26,6 +26,8 @@ awk '
         # For non-comment lines (the evalue is assumed to have been set in the blast command),
         $1 !~ /#/ {
 
+                qlen=$13
+
                 # Get the current subject strand
                 if( $15 > 0){   curr_sstrand= "+" }
                 else {          curr_sstrand= "-" }
@@ -43,34 +45,28 @@ awk '
                         if( new_qs > qs) { new_qs=qs }
                         if( new_qe < qe) { new_qe=qe }
 
-                        # With repesct to the subject strand, aslo elongate the current HSP if appropriate.
+                        # With repesct to the subject strand, also elongate the current HSP if appropriate.
+                        # Positive strand
                         if( sstrand ~ /\+/ ){
                                 if( new_ss > ss) { new_ss=ss }
                                 if( new_se < se) { new_se=se }
-
-                                # If the potential elongated HSP is no more than 3 times (3 times fors AA, 9 for nucl) greater than the query, apply the modifications.
-                                if( (1 + new_se - new_ss) <= 9*$13 ){
-                                        $7=new_qs
-                                        $8=new_qe
-                                        $9=new_ss
-                                        $10=new_se
-                                }
+                                HSP_slen= 1 + new_se - new_ss
                         }
+                        # Negative strand
                         if( sstrand ~ /\-/ ){
                                 if( new_ss < ss) { new_ss=ss }
                                 if( new_se > se) { new_se=se }
-                                if( (1 + new_ss - new_se) <= 9*$13 ){
-                                        $7=new_qs
-                                        $8=new_qe
-                                        $9=new_ss
-                                        $10=new_se
-                                }
+                                HSP_slen= 1 + new_ss - new_se
                         }
 
+                        # If the potential elongated HSP is no more than 3 times (3 times fors AA, 9 for nucl) greater than the query, apply the modifications (e.i. perfom the elongation/merging).
+                        if( HSP_slen <= 9*qlen ){
+                                $7=new_qs
+                                $8=new_qe
+                                $9=new_ss
+                                $10=new_se
+                        }
                 }
-
-                # Recompute the qcovhsp field
-                $14= 100 * (1 + $8 - $7) / $13
 
                 # Save the current HSP features for next comparison.
                 query=$1
@@ -82,9 +78,13 @@ awk '
                 evalue=$11
                 bitscore=$12
                 sstrand= curr_sstrand
+
+                # Recompute the qcovhsp field
+                HSP_qlen= 1 + qe - qs
+                $14= 100 * HSP_qlen / qlen
                 qcov=$14
 
-
+                # Rename the subject field to include the HSP"s subject start and end positions.
                 $2=$2"_"ss"_"se
 
                 # Print the (possibly edited) current HSP.

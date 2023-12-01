@@ -163,7 +163,7 @@ include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/dense_modules.nf'
 include { ELONGATE_CDS               } from '../modules/local/dense_modules.nf'
 include { BLAST                      } from '../modules/local/dense_modules.nf'
 include { TRG_LIST_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
-include { BLAST_FILTER               } from '../modules/local/dense_modules.nf'
+include { BLAST_BEST_HITS               } from '../modules/local/dense_modules.nf'
 include { DUMMY_DISTANCES            } from '../modules/local/dense_modules.nf'
 include { TREE_DISTANCES             } from '../modules/local/dense_modules.nf'
 include { TRG_TABLE                  } from '../modules/local/dense_modules.nf'
@@ -352,7 +352,7 @@ workflow DENSE {
  						)
 
 	// Establish the list of homologs (coding and non-coding) for each TRG and neighor genome.
-	BLAST_FILTER( 
+	BLAST_BEST_HITS( 
 				params.focal,
 				BLAST_out_ch
 				)
@@ -383,7 +383,7 @@ workflow DENSE {
 	// Build the summary table from the blast results.
 	TRG_TABLE	( 
 				tree_distances_ch,
-				BLAST_FILTER.out.map{ name, best_hits -> best_hits }.toList()
+				BLAST_BEST_HITS.out.map{ name, best_hits -> best_hits }.toList()
 				)
 	TRG_table_ch = TRG_TABLE.out
 
@@ -431,7 +431,7 @@ workflow DENSE {
 
 		CHECK_SYNTENY_INPUTS(
 								params.focal,
-								BLAST_FILTER.out
+								BLAST_BEST_HITS.out
 							)
 
 		gff_ch = EXTRACT_CDS.out

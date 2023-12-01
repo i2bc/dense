@@ -12,7 +12,6 @@ while [ $# -gt 0 ]; do
 done
 
 
-#touch ${in}.best_hits.tsv
 touch TRG_blast_${subject_genome}_best_hits.tsv
 
 
@@ -28,11 +27,10 @@ awk -v query_genome="${query_genome}" -v subject_genome="${subject_genome}" -v t
 		# Get the query name but without the specified frames.
 		$1=gensub(/(.*_elongated)_F[0-9]_[0-9]/,"\\1","g",$1)
 
-		# If this is the first time the programme meet a significant aligment for this query and this subject, add them to the "hits.tsv" file.
+		# If this is the first time the programme meets a significant aligment for this query and this subject, add them to the "hits.tsv" file.
 		if ( !($1$2 in data)){
 			# Save the pair.
 			data[$1$2]=1
-			#print query_genome,$1,subject_genome,$2,type >> FILENAME".hits.tsv"
 			print query_genome,$1,subject_genome,$2,type >> "TRG_blast_"subject_genome"_hits.tsv"
 		}
 
@@ -49,7 +47,6 @@ awk -v query_genome="${query_genome}" -v subject_genome="${subject_genome}" -v t
 	# At the end, for each query with a best-subject, add the query-subject pair to the "best_hits.tsv" file.
 	END {
 		for (query in best){
-			#print query_genome,query,subject_genome,best[query],type >> FILENAME".best_hits.tsv"
 			print query_genome,query,subject_genome,best[query],type >> "TRG_blast_"subject_genome"_best_hits.tsv"
 		}
 	}

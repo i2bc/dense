@@ -463,7 +463,7 @@ process TRG_LIST_BEFORE_STRATEGY {
 }
 
 
-process BLAST_FILTER {
+process BLAST_BEST_HITS {
 
 	input:
 		val focal
@@ -477,11 +477,12 @@ process BLAST_FILTER {
 
 	# Get the list of homologs (CDS and whole_genome) for each genome.
 	
-	bash tableau_frameshifts_pretreatment.sh --in $TRG_multielongated_tblastn_genome_out
+	# Take possible frameshifts into account.
+	bash tblastn_merge_HSPs_from_same_alignment.sh --in $TRG_multielongated_tblastn_genome_out
 	
-	bash tableau.sh --query_genome $focal --subject_genome $genome_name --in $TRG_multielongated_blastp_CDS_elongated_out 		--type CDS
-	bash tableau.sh --query_genome $focal --subject_genome $genome_name --in ${TRG_multielongated_tblastn_genome_out}.processed 	--type genome
-	
+	# Generate a file with the best hit for each query.
+	bash blast_hits_and_best_hits.sh --query_genome $focal --subject_genome $genome_name --in $TRG_multielongated_blastp_CDS_elongated_out 		--type CDS
+	bash blast_hits_and_best_hits.sh --query_genome $focal --subject_genome $genome_name --in ${TRG_multielongated_tblastn_genome_out}.processed 	--type genome
 	"""
 }
 
@@ -728,21 +729,5 @@ process FILTER_ISOFORMS {
 		}
 
 	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
-	"""
-}
-
-
-process WARN_MISSING {
-	debug true
-	input:
-	val x
-	val y
-
-	when:
-    y == 'EMPTY'
-
-	"""
-	echo $x
-	exit 1
 	"""
 }
