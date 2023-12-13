@@ -23,7 +23,7 @@ process CHECK_INPUTS {
 		# Record every genome 
 		{ gn[\$2] = 1 }
 
-		# For any line, if the nb of occurences if not one, record the genome in "pb"
+		# For any line, if the nb of occurences is not one, record the genome in "pb"
 		\$1 != 1 { pb[\$2]=1 }
 
 		# Fasta list
@@ -567,11 +567,15 @@ process CHECK_SYNTENY_INPUTS {
 		
 	"""
 	touch ${focal}_vs_${genome}_synteny_pairs.tsv
+	# $best_hits represents two files : first the blasp best hits file, then the tblastn best hits file.
 	awk '
 		BEGIN {FS=OFS="\t"}
-		
+		# First the blastp best hits file
 		\$5 == "CDS" { data[\$2\$3] = 1 }
+		# Then the tblastn best hits file
+		# If their is a genome match and no CDS match, the subject is considered as intergenic.
 		\$5== "genome" && (!(\$2\$3 in data)) { 
+			# Print the query (focal) and its best matching DNA region in the neighbor genome., to test if they are syntenic.
 			print gensub(/_elongated.*/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
 	"""
 }
