@@ -169,7 +169,7 @@ process TAXDUMP {
 			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
 		fi
 		valid_taxdump="${workDir}/taxdump"
-		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
+		echo "The taxdump directory is \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
 
 	else
 
@@ -674,60 +674,40 @@ process SYNTENY_TO_TABLE {
 }
 
 
-process FILTER_TABLE_WITH_STRATEGY {
-
-	input:
-		val focal
-		val synteny
-		val strategy
-		path TRG_table
-		
-	output:
-		path "TRGs_selected_before_isoform_control.txt"
-		
-	"""
-	filter_table_with_strategy.py --table $TRG_table --strategy $strategy --synteny $synteny --out TRGs_selected_before_isoform_control.txt
-	"""
-}
-
-
-process FILTER_ISOFORMS {
+process TRG_TABLE_TO_MATCH_MATRIX {
 
 	publishDir "${params.outdir}"
 
 	input:
-		path TRGs_selected_before_strategy
-		path TRGs_selected_after_strategy
+		path TRG_table
+		path tree
 		
 	output:
-		path "denovogenes.txt"
+		path "TRG_match_matrix.tsv"
 		
 	"""
-	touch denovogenes.txt
+	TRG_table_to_match_matrix.py $TRG_table $tree --out TRG_match_matrix.tsv
+	"""
+}
 
-	# Compare the list of TRGs before and after applying the slection strategy.
-	# Remove the TRGs with excluded isoforms.
-	awk '
-		BEGIN {FS=OFS="\t"}
 
-		FNR==1 { FNUM++ }
+process MATCH_MATRIX_TO_DE_NOVO_GENES {
 
-		# First file : TRGs_selected_after_strategy
-		FNUM==1 { final[\$0]=1 }
+	publishDir "${params.outdir}"
+
+	input:
+		path match_matrix
+		path TRGs_selected_before_strategy
+		val strategy
+		val synteny
 		
-		# Second file : TRGs_selected_before_strategy
-		FNUM==2 && (!(\$1 in final)){ excluded[\$2]=1 }
+	output:
+		path "denovogenes.tsv"
 		
-		# Third file : TRGs_selected_before_strategy
-		FNUM==3 {
-			if(\$2 in excluded){
-				print \$1 >> "TRG_excluded.txt"
-			}
-			else {
-				print \$0 >> "denovogenes.txt"
-			}
-		}
-
-	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
+	"""
+	match_matrix_to_de_novo_genes.py $match_matrix $TRGs_selected_before_strategy \
+	--strategy $strategy \
+	--synteny $synteny \
+	--out denovogenes.tsv
 	"""
 }

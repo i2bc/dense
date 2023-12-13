@@ -150,28 +150,28 @@ log.info ""
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { ORTHOLOGS                  } from '../subworkflows/local/orthologs'
-include { CHECK_INPUTS               } from '../modules/local/dense_modules.nf'
-include { MRNA_TO_GENE               } from '../modules/local/orthologs_modules.nf'
-include { EXTRACT_CDS                } from '../modules/local/dense_modules.nf'
-include { TAXDUMP                    } from '../modules/local/dense_modules.nf'
-include { GENERA                     } from '../modules/local/dense_modules.nf'
-include { GENERA_FILTER              } from '../modules/local/dense_modules.nf'
-include { FIND_TRG                   } from '../modules/local/dense_modules.nf'
-include { TRG_FNA                    } from '../modules/local/dense_modules.nf'
-include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/dense_modules.nf'
-include { ELONGATE_CDS               } from '../modules/local/dense_modules.nf'
-include { BLAST                      } from '../modules/local/dense_modules.nf'
-include { TRG_LIST_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
+include { ORTHOLOGS                     } from '../subworkflows/local/orthologs'
+include { CHECK_INPUTS                  } from '../modules/local/dense_modules.nf'
+include { MRNA_TO_GENE                  } from '../modules/local/orthologs_modules.nf'
+include { EXTRACT_CDS                   } from '../modules/local/dense_modules.nf'
+include { TAXDUMP                       } from '../modules/local/dense_modules.nf'
+include { GENERA                        } from '../modules/local/dense_modules.nf'
+include { GENERA_FILTER                 } from '../modules/local/dense_modules.nf'
+include { FIND_TRG                      } from '../modules/local/dense_modules.nf'
+include { TRG_FNA                       } from '../modules/local/dense_modules.nf'
+include { MULTIELONGATE_FOCAL_TRG       } from '../modules/local/dense_modules.nf'
+include { ELONGATE_CDS                  } from '../modules/local/dense_modules.nf'
+include { BLAST                         } from '../modules/local/dense_modules.nf'
+include { TRG_LIST_BEFORE_STRATEGY      } from '../modules/local/dense_modules.nf'
 include { BLAST_BEST_HITS               } from '../modules/local/dense_modules.nf'
-include { DUMMY_DISTANCES            } from '../modules/local/dense_modules.nf'
-include { TREE_DISTANCES             } from '../modules/local/dense_modules.nf'
-include { TRG_TABLE                  } from '../modules/local/dense_modules.nf'
-include { CHECK_SYNTENY_INPUTS       } from '../modules/local/dense_modules.nf'
-include { CHECK_SYNTENY              } from '../modules/local/dense_modules.nf'
-include { SYNTENY_TO_TABLE           } from '../modules/local/dense_modules.nf'
-include { FILTER_TABLE_WITH_STRATEGY } from '../modules/local/dense_modules.nf'
-include { FILTER_ISOFORMS            } from '../modules/local/dense_modules.nf'
+include { DUMMY_DISTANCES               } from '../modules/local/dense_modules.nf'
+include { TREE_DISTANCES                } from '../modules/local/dense_modules.nf'
+include { TRG_TABLE                     } from '../modules/local/dense_modules.nf'
+include { CHECK_SYNTENY_INPUTS          } from '../modules/local/dense_modules.nf'
+include { CHECK_SYNTENY                 } from '../modules/local/dense_modules.nf'
+include { SYNTENY_TO_TABLE              } from '../modules/local/dense_modules.nf'
+include { TRG_TABLE_TO_MATCH_MATRIX     } from '../modules/local/dense_modules.nf'
+include { MATCH_MATRIX_TO_DE_NOVO_GENES } from '../modules/local/dense_modules.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -469,19 +469,20 @@ workflow DENSE {
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 
-	// Apply the given strategy to filter TRG_table and thus select good candidates.
-	FILTER_TABLE_WITH_STRATEGY(
-							   params.focal,
-							   params.synteny,
-							   params.strategy,
-							   TRG_table_ch,
-							  )
+	// Turn the TRG table into a more human-readable matrix, where each row is a TRG and each column a genome.
+	TRG_TABLE_TO_MATCH_MATRIX(
+							  TRG_table_ch,
+							  CHECK_INPUTS.out.tree
+							 )
 
-	// Remove TRGs with any isoform that has been filtered out by applying the strategy.
-	FILTER_ISOFORMS(
-					TRG_LIST_BEFORE_STRATEGY.out,
-					FILTER_TABLE_WITH_STRATEGY.out
-				    )
+	// Apply the given strategy on the match matrix to select good candidates.
+	// Remove genes where some isoforms are "de novo" but not the others.
+	MATCH_MATRIX_TO_DE_NOVO_GENES(
+								  TRG_TABLE_TO_MATCH_MATRIX.out,
+								  TRG_LIST_BEFORE_STRATEGY.out,
+								  params.strategy,
+								  params.synteny
+								 )
 }
 
 /*
