@@ -32,7 +32,7 @@ then
 	' $1
 
 else
-        # $1 has no mRNA feature
+    # $1 has no mRNA feature
 	awk '
                 BEGIN{FS=OFS="\t"}
 

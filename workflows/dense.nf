@@ -53,7 +53,7 @@ if (params.trg_node && params.trg_rank) {
 }
 
 if (params.trgs) {
-	for (key in ['genera_out', 'genera_db', 'taxids', 'trg_node', 'trg_rank']) {
+	for (key in ['genera_out', 'genera_db', 'taxids', 'trg_node']){//, 'trg_rank']) {
 		if(params[key]){
 			log.info "'--trgs' and '--${key}' are not compatible."
 			stop = true
@@ -80,6 +80,10 @@ if ( !params.taxids && params.genera_db ) {
 def synt_strats = [1, 2]
 if (params.synteny && ! synt_strats.contains(params.strategy)) {
 	log.info "There is no synteny check to perform with strategy ${params.strategy} since there no homolog detection (see '--strategy' and '--synteny')."
+	stop = true
+}
+if (params.synteny && ! params.anchors) {
+	log.info "You need to provide the number of anchor genes to collect to check the synteny (see '--anchors' and '--synteny')."
 	stop = true
 }
 
@@ -117,23 +121,6 @@ if(params.taxdump){
 if(!params.trg_node){ trg_node = "null"} else { trg_node = params.trg_node }
 
 // TRG list file
-// if ( params.containsKey('trgs') && (params.trgs instanceof String) && params.trgs != "null") {
-// 	if (file(params.trgs).exists()){
-// 		if(file(params.trgs).isEmpty()){
-// 			log.info "WARNING : '${params.trgs}' is empty (see the '--trgs' option)"
-// 			System.exit(0)
-// 		} else {
-// 			log.info "A list of TRG was provided with '${params.trgs}'."
-// 			TRG_file = params.trgs
-// 		}
-// 	} else {
-// 		log.info "WARNING : '${params.trgs}' not found (see the '--trgs' option)"
-// 		System.exit(0)
-// 	}
-// } else { 
-// 	log.info "No list of TRGs provided."
-// 	TRG_file = file("dummy")
-// }
 if (params.trgs) {
 	if (file(params.trgs).exists()){
 		if(file(params.trgs).isEmpty()){
@@ -171,11 +158,12 @@ include { TAXDUMP                    } from '../modules/local/dense_modules.nf'
 include { GENERA                     } from '../modules/local/dense_modules.nf'
 include { GENERA_FILTER              } from '../modules/local/dense_modules.nf'
 include { FIND_TRG                   } from '../modules/local/dense_modules.nf'
+include { TRG_FNA                    } from '../modules/local/dense_modules.nf'
 include { MULTIELONGATE_FOCAL_TRG    } from '../modules/local/dense_modules.nf'
 include { ELONGATE_CDS               } from '../modules/local/dense_modules.nf'
 include { BLAST                      } from '../modules/local/dense_modules.nf'
-include { TRGS_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
-include { BLAST_FILTER               } from '../modules/local/dense_modules.nf'
+include { TRG_LIST_BEFORE_STRATEGY       } from '../modules/local/dense_modules.nf'
+include { BLAST_BEST_HITS               } from '../modules/local/dense_modules.nf'
 include { DUMMY_DISTANCES            } from '../modules/local/dense_modules.nf'
 include { TREE_DISTANCES             } from '../modules/local/dense_modules.nf'
 include { TRG_TABLE                  } from '../modules/local/dense_modules.nf'
@@ -184,7 +172,6 @@ include { CHECK_SYNTENY              } from '../modules/local/dense_modules.nf'
 include { SYNTENY_TO_TABLE           } from '../modules/local/dense_modules.nf'
 include { FILTER_TABLE_WITH_STRATEGY } from '../modules/local/dense_modules.nf'
 include { FILTER_ISOFORMS            } from '../modules/local/dense_modules.nf'
-include { TEST                       } from '../modules/local/dense_modules.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -193,9 +180,6 @@ include { TEST                       } from '../modules/local/dense_modules.nf'
 */
 
 workflow DENSE {
-//workflow {
-
-	// TEST()
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -239,6 +223,9 @@ workflow DENSE {
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	Get the TRGs and their homologous sequences (CDS or genomic intervals)
+
+	In this workflow, the term "TRG" is used to refer to the coding sequences (CDS) of taxonomically restricted genes (TRG) from the focal genome.
+	One single taxonomically restricted gene can have several isoforms (i.e. several CDS) that will all be reffered as "TRG".
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
 
@@ -252,7 +239,7 @@ workflow DENSE {
 		.map { name, fasta, gff -> [ name,
 									 file("${params.trgsblastdir}/TRG_multielongated_blastp_${name}_CDS_elongated.out"),
 									 file("${params.trgsblastdir}/TRG_multielongated_tblastn_${name}_genome.out")
-								   ] 
+								   ]
 			 }
 
 	} else {
@@ -316,12 +303,12 @@ workflow DENSE {
 			}
 
 			GENERA_FILTER(
-						  genera_out_ch,
 						  TAXDUMP.out,
 						  focal_taxid, 
-						  params.trg_rank,
 						  trg_node,
-						  focal_mRNA_to_gene_ch
+						  params.trg_rank,
+						  focal_mRNA_to_gene_ch,
+						  genera_out_ch
 						 )
 			TRG_ch = GENERA_FILTER.out
 		} 
@@ -329,40 +316,43 @@ workflow DENSE {
 
 		// Then, now that we have the TRGs, find their homologs in the neighbor genomes.
 
+		TRG_FNA(
+				focal_ch.map{ focal_name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_fna },
+				TRG_ch
+				)
 		// To maximize the chances to find true homologs, all sequences (the TRG and the CDS of neighbor genomes) are elongated :
 		// 100 nucleotides are added on each sides of each sequence.
 		
 		// The elongated parts of the TRG (of the genome of interest), are translated into the 3 possible frames to 'allow' two frameshifts in the neighbor.
 		// Ad the end, 9 sequences (AA) are generated for each TRG.
 		MULTIELONGATE_FOCAL_TRG( 
-								TRG_ch,
+								TRG_FNA.out,
 								focal_ch
 								)
 
 		// Also get an elongated version of the trasnlated CDS for every genome (subjects).
 		ELONGATE_CDS( EXTRACT_CDS.out )
-			
+
 		// Search for homologs of the focal's TRG among :
 		// 	-the CDS (blastp),
 		//	-the entiere genome (tblastn),
 		// of each neighbor genome.
 		// TRG collection
 		BLAST	(	
-				 MULTIELONGATE_FOCAL_TRG.out.TRG_multielongated_faa.first(),
+				 MULTIELONGATE_FOCAL_TRG.out.first(),
 				 ELONGATE_CDS.out
 				)
 		BLAST_out_ch = BLAST.out
-
 	}
 
 	// Get a list with all TRGs before additionnal filtering
-	TRGS_BEFORE_STRATEGY( 
+	TRG_LIST_BEFORE_STRATEGY( 
 						 BLAST_out_ch.first(),
 						 focal_mRNA_to_gene_ch
  						)
 
 	// Establish the list of homologs (coding and non-coding) for each TRG and neighor genome.
-	BLAST_FILTER( 
+	BLAST_BEST_HITS( 
 				params.focal,
 				BLAST_out_ch
 				)
@@ -393,7 +383,7 @@ workflow DENSE {
 	// Build the summary table from the blast results.
 	TRG_TABLE	( 
 				tree_distances_ch,
-				BLAST_FILTER.out.map{ name, best_hits -> best_hits }.toList()
+				BLAST_BEST_HITS.out.map{ name, best_hits -> best_hits }.toList()
 				)
 	TRG_table_ch = TRG_TABLE.out
 
@@ -441,7 +431,7 @@ workflow DENSE {
 
 		CHECK_SYNTENY_INPUTS(
 								params.focal,
-								BLAST_FILTER.out
+								BLAST_BEST_HITS.out
 							)
 
 		gff_ch = EXTRACT_CDS.out
@@ -457,6 +447,7 @@ workflow DENSE {
 
 		// Test if synteny is conserved between the TRG genomic environment and the one of its noncoding outgroup.
 		CHECK_SYNTENY(
+					  params.anchors,
 					  focal_synteny_ch,
 					  synteny_main_ch
 					 )
@@ -488,7 +479,7 @@ workflow DENSE {
 
 	// Remove TRGs with any isoform that has been filtered out by applying the strategy.
 	FILTER_ISOFORMS(
-					TRGS_BEFORE_STRATEGY.out,
+					TRG_LIST_BEFORE_STRATEGY.out,
 					FILTER_TABLE_WITH_STRATEGY.out
 				    )
 }

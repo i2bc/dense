@@ -1,17 +1,3 @@
-process TEST {
-	tag "Super test trop bien"
-	debug true
-
-	"""
-	python --version
-	awk -V
-	"""
-
-}
-
-
-
-
 process CHECK_INPUTS {
 
 	input:
@@ -70,7 +56,7 @@ process CHECK_INPUTS {
 	echo ""
 
 
-	# 2. Check that GFF files are GFF3 compliant and have "gene" and "mRNA" features.
+	# 2. Check that GFF files are GFF3 compliant and have "CDS", "gene", and "mRNA" features.
 	cat valid_genomes.txt | while read genome
 	do
 		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
@@ -119,8 +105,6 @@ process CHECK_INPUTS {
 }
 
 
-
-
 process EXTRACT_CDS {
 
 	input:
@@ -163,8 +147,6 @@ process EXTRACT_CDS {
 }
 
 
-
-
 process TAXDUMP {
 
 	debug true
@@ -198,7 +180,6 @@ process TAXDUMP {
 	fi
 	"""
 }
-
 
 
 process GENERA {
@@ -237,139 +218,25 @@ process GENERA {
 }
 
 
-
-
 process GENERA_FILTER {
 
-	publishDir "${params.outdir}/genera_results"
+        publishDir "${params.outdir}/genera_results"
 
-	input:
-		path genera_out
-		path taxdump
-		val taxid
-		val TRG_rank
-		val TRG_node
-		path focal_mRNA_to_gene
+        input:
+            path taxdump
+            val taxid
+            val TRG_node
+            val TRG_rank
+            path mapping
+            path genera_out
 
-	output:
-		path 'TRGs.txt'
-		
-	"""
-	if [[ $taxid == "EMPTY" ]]; then echo "The focal taxid could not be found!"; exit 1 ; fi
+        output:
+            path 'TRG_CDS.txt'
 
-
-	# In this process, multiple awk commands are used, to generate usefull intermediate files for the user.
-
-
-	# First, find the nodes ("ages") to characterize TRGs.
-	
-	# 'TRG_node' is the node where TRGs "start", in other words : 
-	# if TRG_node is "Mammalia" then all CDS no older than "Mammalia" are considered as TRG, 
-	# including "Mammalia" but also "Primates", and so on...
-
-	if [ \$(echo "${TRG_node}" | wc -w ) -eq 1 ] && [ ${TRG_node} == "null" ]
-	then
-		echo "As no TRG_node was provided, using TRG_rank (${TRG_rank})."
-		TRG_node=\$(rank_to_node.sh $taxdump $taxid $TRG_rank)
-	else
-		echo "Using TRG_node to filter CDS."
-		TRG_node=$TRG_node
-	fi
-
-	echo "TRG_node is now set to '\${TRG_node}'."
-
-
-	awk -v taxid="${taxid}" '
-		BEGIN{FS=OFS="\t\\\\|\t"}
-		\$1 == taxid {print \$3\$2}
-	' $taxdump/fullnamelineage.dmp | sed "s/; \t|/; /" | \
-	awk -v TRG_node="\${TRG_node}" '
-		BEGIN{FS="; "}
-		NR==1 {
-			for (i=1;i<=NF;i++){
-				if(\$i == TRG_node){
-					goprint = 1
-				}
-				if(goprint){ print \$i }
-			}
-		}
-	' > TRG_nodes.txt # This is the list of nodes that will be used to detect TRGs.
-
-
-	#### Filter genera output ####
-	
-	# Only keep CDS that are "young".
-	# Remove any CDS whith an "old" isoforme. 
-	awk '
-		BEGIN {FS=OFS="\t"}
-
-		# First file : focal_mRNA_to_gene
-		FNR==NR { genes[\$1]=\$2 }
-
-		# Second file : genEra output
-		FNR!=NR {
-
-			if(\$1 in genes){
-				print \$0, genes[\$1]
-			} else {
-				if(FNR != 1) { print "WARNING : NO gene associated with "\$1"!" }
-			}
-		}
-	' $focal_mRNA_to_gene $genera_out > genEra_output_with_genes.tsv
-
-	awk '
-		BEGIN {FS=OFS="\t"}
-
-		# First file : TRG_nodes.txt
-		FNR==NR { TRG_nodes[\$0]=1 }
-
-		# Second file : genEra_output_with_genes.tsv
-		FNR!=NR {
-
-			# If the gene is NOT already know as old,
-			if (!(\$NF in old_genes)) {
-
-				# If the current CDS is old
-				if (!(\$2 in TRG_nodes)) {
-
-					# Add it to the old genes
-					old_genes[\$NF] = 1
-
-					# Delete its key from the young_genes
-					delete young_genes[\$NF]
-				}
-				# If the current CDS is young
-				else {
-					young_genes[\$NF][\$1]=1
-				}
-			}
-		}
-
-		END {
-			for(gene in young_genes){
-				for(CDS in young_genes[gene]){
-					print CDS
-				}
-			}
-		}
-
-	' TRG_nodes.txt genEra_output_with_genes.tsv > TRGs.txt
-
-	# Also filter without taking into account isoformes
-	awk '
-		BEGIN {FS=OFS="\t"}
-
-		# First file : TRG_nodes.txt
-		FNR==NR { TRG_nodes[\$1]=1 }
-
-		# Second file : genEra output
-		FNR!=NR && \$2 in TRG_nodes { print \$0 }
-
-	' TRG_nodes.txt genEra_output_with_genes.tsv > TRGs_without_isoforms_correction.tsv
-	"""
+        """
+        genEra_filter.py '$taxdump' '$taxid' '$TRG_node' '$TRG_rank' '$mapping' '$genera_out'
+        """
 }
-
-
 
 
 process FIND_TRG {
@@ -380,7 +247,7 @@ process FIND_TRG {
 		path(TRG_list)
 		tuple val(genome_name), path(gfasta), path(gff), path(fai), path(CDS_fna), path(CDS_faa)
 	output:
-		path("TRGs.txt")
+		path("TRG.txt")
 		
 	"""
 	# Get the CDS list in a text file (already unique with gffread).
@@ -408,12 +275,28 @@ process FIND_TRG {
 			exit 1
 		fi
 	else
-		grep ">" $CDS_fna | shuf -n 50 | sed "s/>//" > TRGs.txt
+		echo "ERROR : ${TRG_list} does not exist or is empty."
+		exit 1
 	fi
 	"""
 }
 
 
+process TRG_FNA {
+
+	input:
+		path CDS_fna
+		path TRGs
+		
+	output:
+		path "TRG.fna"
+		
+	"""
+	chmod -R +x ${projectDir}/bin
+
+	faSomeRecords $CDS_fna $TRGs TRG.fna
+	"""
+}
 
 
 process MULTIELONGATE_FOCAL_TRG {
@@ -430,32 +313,26 @@ process MULTIELONGATE_FOCAL_TRG {
 
 	# Generate a FASTA with the CDS of the focal genome, elongated by 100 nucleotides up and downstream :
 	
-	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_0
-	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_1
-	# 100_nucl_translated_in_frame_0____translated_CDS____100_nucl_translated_in_frame_2
-	# 100_nucl_translated_in_frame_1____translated_CDS____100_nucl_translated_in_frame_0
-	# 100_nucl_translated_in_frame_1____translated_CDS____100_nucl_translated_in_frame_1
-	# 100_nucl_translated_in_frame_1____translated_CDS____100_nucl_translated_in_frame_2
-	# 100_nucl_translated_in_frame_2____translated_CDS____100_nucl_translated_in_frame_0
-	# 100_nucl_translated_in_frame_2____translated_CDS____100_nucl_translated_in_frame_1
-	# 100_nucl_translated_in_frame_2____translated_CDS____100_nucl_translated_in_frame_2
+	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_0
+	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_1
+	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_2
+	# 99_nucl_translated_in_frame_1____translated_CDS____99_nucl_translated_in_frame_0
+	# 99_nucl_translated_in_frame_1____translated_CDS____99_nucl_translated_in_frame_1
+	# 99_nucl_translated_in_frame_1____translated_CDS____99_nucl_translated_in_frame_2
+	# 99_nucl_translated_in_frame_2____translated_CDS____99_nucl_translated_in_frame_0
+	# 99_nucl_translated_in_frame_2____translated_CDS____99_nucl_translated_in_frame_1
+	# 99_nucl_translated_in_frame_2____translated_CDS____99_nucl_translated_in_frame_2
 	
-
-	# TRG FASTA
-	grep -x -f <(sed "s/^/>/" $TRGs) $CDS_faa -A1 --no-group-separator > TRG.faa
-
-	# TRG multielongated FASTA
-	bash get_CDS_borders.sh \\
-	--gfasta $gfasta \\
-	--gff $gff \\
-	--genome $fai \\
-	--size 100 \\
-	--multiframe True
-
+	extend_cds.py \
+	--gfasta $gfasta \
+	--fai $fai \
+	--gff $gff \
+	--cds $TRGs \
+	--size 99 \
+	--mode multi \
+	--out TRG_multielongated.faa
 	"""
 }
-
-
 
 
 process ELONGATE_CDS {
@@ -474,17 +351,16 @@ process ELONGATE_CDS {
 	# In case of multi matchs, the one with the best evalue is more likely to be the right one with this elongated version (bring genomic context).
 	
 	# Generate the elongated translated CDS FASTA.
-	bash get_CDS_borders.sh \\
-	--gfasta $gfasta \\
-	--gff $gff \\
-	--genome $fai \\
-	--size 100 \\
-	--multiframe False
-
+	extend_cds.py \
+	--gfasta $gfasta \
+	--fai $fai \
+	--gff $gff \
+	--cds $CDS_fna \
+	--size 99 \
+	--mode simple \
+	--out CDS_elongated.faa
 	"""
 }
-
-
 
 
 process BLAST {
@@ -528,18 +404,17 @@ process BLAST {
 }
 
 
-
-
-process TRGS_BEFORE_STRATEGY {
+process TRG_LIST_BEFORE_STRATEGY {
 
 	input:
 		tuple val(genome_name), path(TRG_multielongated_blastp_CDS_elongated_out), path(TRG_multielongated_tblastn_genome_out)
 		path focal_mRNA_to_gene
 		
 	output:
-		path 'TRGs_genes_before_strategy.tsv'
+		path 'TRG_before_strategy.tsv'
 		
 	"""
+	# Get the list of TRGs before applying the selection strategy.
 	if grep -q "# Query:" $TRG_multielongated_blastp_CDS_elongated_out
 	then
 		# BLAST format 7
@@ -547,24 +422,24 @@ process TRGS_BEFORE_STRATEGY {
 			/# Query:/ {
 				CDS=gensub(/# Query:\s(.*)/,"\\\\1","g",\$0)
 				# If the case where the CDS is elongated
-				short=gensub(/_elongated_F.*/,"","g",CDS)
+				short=gensub(/_elongated.*/,"","g",CDS)
 				if(!(short in data)){
 					print short
 					data[short]=1
 				}
 			}
-		' $TRG_multielongated_blastp_CDS_elongated_out > TRGs_before_strategy.txt
+		' $TRG_multielongated_blastp_CDS_elongated_out > TRG_CDS_before_strategy.txt
 	else
-		# BLAST format 6 (diamond includes every query including those without any match)
+		# BLAST format 6 (diamond includes every query including those without any match) ## NOT IMPLEMENTED ##
 		awk -F"\t" '
 			\$0 !~ /^#/ {
-				short=gensub(/_elongated_F.*/,"","g",\$1)
+				short=gensub(/_elongated.*/,"","g",\$1)
 				if(!(short in data)){
 					print short
 					data[short]=1
 				}
 			}
-		' $TRG_multielongated_blastp_CDS_elongated_out > TRGs_before_strategy.txt
+		' $TRG_multielongated_blastp_CDS_elongated_out > TRG_CDS_before_strategy.txt
 
 	fi
 
@@ -583,14 +458,12 @@ process TRGS_BEFORE_STRATEGY {
 				if(FNR != 1) { print "WARNING : NO gene associated with "\$1"!" }
 			}
 		}
-	' $focal_mRNA_to_gene TRGs_before_strategy.txt > TRGs_genes_before_strategy.tsv
+	' $focal_mRNA_to_gene TRG_CDS_before_strategy.txt > TRG_before_strategy.tsv
 	"""
 }
 
 
-
-
-process BLAST_FILTER {
+process BLAST_BEST_HITS {
 
 	input:
 		val focal
@@ -604,15 +477,14 @@ process BLAST_FILTER {
 
 	# Get the list of homologs (CDS and whole_genome) for each genome.
 	
-	bash tableau_frameshifts_pretreatment.sh --in $TRG_multielongated_tblastn_genome_out
+	# Take possible frameshifts into account.
+	bash tblastn_merge_HSPs_from_same_alignment.sh --in $TRG_multielongated_tblastn_genome_out
 	
-	bash tableau.sh --query_genome $focal --subject_genome $genome_name --in $TRG_multielongated_blastp_CDS_elongated_out 		--type CDS
-	bash tableau.sh --query_genome $focal --subject_genome $genome_name --in ${TRG_multielongated_tblastn_genome_out}.processed 	--type genome
-	
+	# Generate a file with the best hit for each query.
+	bash blast_hits_and_best_hits.sh --query_genome $focal --subject_genome $genome_name --in $TRG_multielongated_blastp_CDS_elongated_out 		--type CDS
+	bash blast_hits_and_best_hits.sh --query_genome $focal --subject_genome $genome_name --in ${TRG_multielongated_tblastn_genome_out}.processed 	--type genome
 	"""
 }
-
-
 
 
 process DUMMY_DISTANCES {
@@ -635,8 +507,6 @@ process DUMMY_DISTANCES {
 }
 
 
-
-
 process TREE_DISTANCES {
 
 	input:
@@ -651,8 +521,6 @@ process TREE_DISTANCES {
 	tree_distances.py -tree $tree -focal $focal -out tree_distances.tsv 
 	"""
 }
-
-
 
 
 process TRG_TABLE {
@@ -688,8 +556,6 @@ process TRG_TABLE {
 }
 
 
-
-
 process CHECK_SYNTENY_INPUTS {
 
 	input:
@@ -706,11 +572,9 @@ process CHECK_SYNTENY_INPUTS {
 		
 		\$5 == "CDS" { data[\$2\$3] = 1 }
 		\$5== "genome" && (!(\$2\$3 in data)) { 
-			print gensub(/_elongated/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
+			print gensub(/_elongated.*/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
 	"""
 }
-
-
 
 
 process CHECK_SYNTENY {
@@ -721,6 +585,7 @@ process CHECK_SYNTENY {
 	// memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
 	
 	input:
+		val anch_nb
 		tuple val(focal), path(focal_gff, stageAs:'focal_gff.gff')
 		tuple val(genome), path(genome_gff), path(orthologs), path(input_pairs)
 		
@@ -737,8 +602,8 @@ process CHECK_SYNTENY {
 	--gffB $genome_gff \
 	--ortho $orthologs \
 	--list $input_pairs \
-	--flankA 2 \
-	--flankB 4 \
+	--flankA $anch_nb \
+	--flankB $anch_nb \
 	--up_min 1 \
 	--ov_min 0 \
 	--do_min 1 \
@@ -750,8 +615,6 @@ process CHECK_SYNTENY {
 	--out ${focal}_vs_${genome}_synteny
 	"""
 }
-
-
 
 
 process SYNTENY_TO_TABLE {
@@ -791,7 +654,7 @@ process SYNTENY_TO_TABLE {
 		# then
 		FILENAME == TRG_table && FNR != 1 {
 
-			query = gensub(/_elongated/,"","g",\$2)
+			query = gensub(/_elongated.*/,"","g",\$2)
 			neighbor = \$3
 			target = \$4
 
@@ -811,8 +674,6 @@ process SYNTENY_TO_TABLE {
 }
 
 
-
-
 process FILTER_TABLE_WITH_STRATEGY {
 
 	input:
@@ -825,82 +686,9 @@ process FILTER_TABLE_WITH_STRATEGY {
 		path "TRGs_selected_before_isoform_control.txt"
 		
 	"""
-	echo -n "strategy : ${strategy}"
-	
-	# Filter TRGs according to the selected strategy (see the Help section)
-
-	if [ $strategy == 1 ]
-	then
-		awk '
-
-			BEGIN { FS=OFS="\t" }
-
-			# If this is a CDS match and there is no recorded farest CDS match, OR
-			# If this is a CDS match and the root distance is lower than what is recorded for this TRG,
-			# then record it as the farest CDS match.
-			\$5=="CDS" && ( (!(\$2 in farest_CDS)) || (\$7 < farest_CDS[\$2]) ){ farest_CDS[\$2]=\$7 }
-
-			# If this is a genome match and there is no recorded farest CDS match, OR
-			# If this is a genome match and the root distance is lower than the farest CDS match for this TRG, print (keep) the line.
-			\$5=="genome" && ( (!(\$2 in farest_CDS)) || (\$7 < farest_CDS[\$2]) )
-
-		' ${TRG_table} > TRG_selected_before_synteny_check.tsv
-	fi
-
-
-	if [ $strategy == 2 ]
-	then
-		awk '
-
-			BEGIN { FS=OFS="\t" }
-
-			# If this is a CDS match, record the TRG-genome pair.
-			\$5=="CDS" { CDS_match[\$2\$3] = 1 }
-
-			# If this is a genome match and the TRG-genome pair does is not recorded, print (keep) the line.
-			\$5=="genome" && (!(\$2\$3 in CDS_match))
-
-		' ${TRG_table} > TRG_selected_before_synteny_check.tsv
-	fi
-
-
-	# If synteny checking is on, only keep TRG with lines with isSynt == "True"
-	if [ $synteny == "true" ]
-	then
-		touch TRGs_selected_before_isoform_control.txt
-		awk 'BEGIN {FS=OFS="\t"} \$8 == "True" {print \$2}' TRG_selected_before_synteny_check.tsv > TRGs_selected_before_isoform_control.txt
-	else
-		awk 'BEGIN {FS=OFS="\t"} {print \$2}' TRG_selected_before_synteny_check.tsv > TRGs_selected_before_isoform_control.txt
-	fi
-
-
-	if [ $strategy == 3 ]
-	then
-		awk -v focal="${focal}" '
-			BEGIN{FS=OFS="\t"}
-
-			# If there is any match outiside the focal genome itself, the CDS is to remove.
-			\$3 != focal { toremove[\$2]=1 }
-
-			{ all[\$2]=1}
-
-			# Only print CDS that are not to remove
-			END {
-				for(TRG in all){
-					if(!(TRG in toremove)){
-						print TRG
-					}
-				}
-			}
-		' ${TRG_table} > TRGs_selected_before_isoform_control.txt
-	fi
-
-	# Remove the possible "_elongated" extension
-	sed -i "s/_elongated//" TRGs_selected_before_isoform_control.txt
+	filter_table_with_strategy.py --table $TRG_table --strategy $strategy --synteny $synteny --out TRGs_selected_before_isoform_control.txt
 	"""
 }
-
-
 
 
 process FILTER_ISOFORMS {
@@ -941,23 +729,5 @@ process FILTER_ISOFORMS {
 		}
 
 	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
-	"""
-}
-
-
-
-
-process WARN_MISSING {
-	debug true
-	input:
-	val x
-	val y
-
-	when:
-    y == 'EMPTY'
-
-	"""
-	echo $x
-	exit 1
 	"""
 }

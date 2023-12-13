@@ -183,6 +183,13 @@
                     "default": true,
                     "description": "Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters."
                 },
+                "anchors": {
+                    "type": "integer",
+                    "default": 4,
+                    "description": "The number of anchor genes to collect on each side (5' and 3') of the TRG and on each side of its non-coding hit. The program will try to identify ortholog pairs between these anchors. If at least one pair is found on each side of the TRG-non-coding-hit pair, then the synteny will be confirmed.",
+                    "minimum": 1,
+                    "maximum": 10
+                },
                 "orthodir": {
                     "type": "string",
                     "description": "A directory with the precomputed pairs of orthologous genes for each focal-neighbor genomes pair. One file per genomes pair, must be named '${focal}_${neighbor}_orthologs.tsv'. Incompatible with the following parameters.",
