@@ -112,11 +112,11 @@ If you run DENSE from the beginning, you need the following inputs:
 > * **Your Taxid.tsv** that you created at step3
 
 > * **Your strategy**. The assessment of a de novo gene status depends on the biological question of the user and the level of assessment she/he wants to do. You have to choice between three strategies, that will characterise the definition you choose for determining a de novo gene status:
->   * Strategy 1 : TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match
+>   * Strategy 1 : This is the default strategy. the TRG is considered to be a *de novo* gene if it has a non-coding match (an no coding one) in a genome from a species with older divergence time than any genome with a CDS match
 >   
->   * Strategy 2 : TRG has a non-coding match in a genome without any CDS match
+>   * Strategy 2 : TRG is considered to be a *de novo* gene if it has a non-coding match in a genome without any CDS match
 >
->   * Strategy 3 : TRG is orphan [default: 1] 
+>   * Strategy 3 : TRG is considered to be a *de novo* gene if it has no coding match to any other species, while at least one non-coding match in an outgroup species.
 
 >
 > **Warning:**
