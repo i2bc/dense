@@ -106,11 +106,16 @@ DENSE runs with the following command line :
 
 If you run DENSE from the beginning, you need the following inputs:
 > * **Your focal genome** in a FASTA format with its GFF3 annotation file, as well as the FASTA and GFF3 file of all the target genomes you want to use for the synteny analysis. Each genome has to be named in the exact same way as its GFF3 annotation file. For example, if you named your genome dmel.fasta, the associated GFF3 file has to be named dmel.gff3.
+
 > * **Link to the NR** previously downloaded
+
 > * **Your Taxid.tsv** that you created at step3
+
 > * **Your strategy**. The assessment of a de novo gene status depends on the biological question of the user and the level of assessment she/he wants to do. You have to choice between three strategies, that will characterise the definition you choose for determining a de novo gene status:
->   * Strategy 1 : TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match 
->   * Strategy 2 : TRG has a non-coding match in a genome without any CDS match 
+>   * Strategy 1 : TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match
+>   
+>   * Strategy 2 : TRG has a non-coding match in a genome without any CDS match
+>
 >   * Strategy 3 : TRG is orphan [default: 1] 
 
 >
