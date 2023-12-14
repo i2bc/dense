@@ -127,15 +127,58 @@ If you run DENSE from the beginning, you need the following inputs:
 Here is an example of the config file "my_config.config", that you can copy and fill with your data if you run DENSE from the beginning with the minimal options.
 
 ```
- // Input data
-    taxids      = "PATH TO YOUR taxids.tsv"
-    gendir      = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
-    focal genome      = "Name of your focal genome. In our example : dmel"  
-    trg_node    = "Here, you have to choose the name of the taxonomic group to which your *de novo* gene is restricted. For example, if your focal genome is from *Drosophila melanogaster*, your TRG node could be *Drosophila melanogaster*, if you are looking for species specific de novo genes, or *Drosophila*, if you search for all *de novo* genes specific to the clade *Drosophila*"
-    strategy    = 2
-    Link to the NR
+params {
+
+    config_profile_name        = 'YOUR NAME profile'
+    config_profile_description = 'If you want, describe your job'
+
+    // The maximum of ressources you can allow to one job :
+    max_cpus   = 16
+    max_memory = '6.GB'
+    max_time   = '6.h'
+
+    // Input data
+    taxids = "PATH TO YOUR taxids.tsv"
+    gendir = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
+    focal genome = "Name of your focal genome. In our example : dmel"  
+    trg_node = "Here, you have to choose the name of the taxonomic group to which your *de novo* gene is restricted. For example, if your focal genome is from *Drosophila melanogaster*, your TRG node could be *Drosophila melanogaster*, if you are looking for species specific de novo genes, or *Drosophila*, if you search for all *de novo* genes specific to the clade *Drosophila*"
+    strategy = 2
+    genera_db = PATH to the NR
+}
+(END)
+```
+
+If you run DENSE from the step 3, which means that you already have a list of TRGs, you need the following inputs:
+> * **Your Focal genome** in a FASTA format with its GFF3 annotation file, as well as the FASTA and GFF3 file of all the target genomes you want to use for the synteny analysis. Each genome has to be named in the exact same way as its GFF3 annotation file. For example, if you named your genome dmel.fasta, the associated GFF3 file has to be named dmel.gff3.
+
+> * **Your list of TRGs** which a txt file with the name of all of your genes
+> * **Your strategy**.
 
 ```
+params {
+
+    config_profile_name        = 'YOUR NAME profile'
+    config_profile_description = 'If you want, describe your job'
+
+    // The maximum of ressources you can allow to one job :
+    max_cpus   = 16
+    max_memory = '6.GB'
+    max_time   = '6.h'
+
+    // Input data
+    gendir = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
+    focal genome = "Name of your focal genome. In our example : dmel"  
+    strategy = 2
+    trgs = Your txt file with you TRGs
+}
+(END)
+```
+
+## Options
+
+Previously, we presented the basic options that you need to run **DENSE**. However, the software includes a lot of flexibility, and the user can decide on a lot more parameters.
+
+
 
 For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/DENSE/usage) and the [parameter documentation](https://nf-co.re/DENSE/parameters).
 
