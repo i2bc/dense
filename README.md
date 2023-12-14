@@ -6,42 +6,25 @@
 ** BOTH DOCUMENTATION AND SCRIPTS ARE NOT COMPLETED OR UP TO DATE**
 ** PLEASE WAIT FOR EARLY 2024 **
 
-**DENSE** is a bioinformatics pipeline that finds genes that have emerged *de novo* (e.i. from non-coding DNA).
+**DENSE** is a software that uses an annotated genome  to detects the genes that have emerged *de novo*.
 
-It uses a genome of interest and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files).
+**DENSE** uses a genome of interest (Focal) and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files). The pipeline includes the following steps :
 
-Starting from genes that are taxonomically restricted (e.i. TRG), it offers severals features to characterize young *de novo* genes, including :
-* identifying non-coding homologous regions in the neghbor genomes,
-* checking that these regions are in synteny with the potential *de novo* genes.  
+* In your Focal genome, **DENSE** identifies all taxonomically restricted genes (TRGs), that have no homology against all other proteins in the Refseq Non-redundant protein database (NR), with help of phylostratigraphy.
+* **DENSE** then identifies non-coding regions that are homologous to the TRG genes in genomes phylogenetically close to the TRGs (selected by the user).
+* **DENSE** finally determines whether the homologous non-coding regions are syntenic with their TRG genes. It generates a file containing all of the TRGs that have emerged *de novo*.
 
 ![dag.png](docs/images/dag.png)
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 
-1. Check the genome files and the newick tree ([`check_inputs`])
-2. Generate a .tsv file with the distances bewteen genomes ([`tree_distances`])
-3. Exctract the coding sequences (CDS) from the genomes ([`exctract_CDS`] [`(gffread)`](https://github.com/gpertea/gffread))
-4. Elongate the CDS to improve the search for homologs ([`multielongate_focal_TRG`] and [`elongate_CDS`])
-5. Blast the taxonomically restricted genes (TRG) against the CDS of the neighbor genomes and against their whole genome ([`BLAST`](https://blast.ncbi.nlm.nih.gov/Blast.cgi))
-6. Filter BLAST outputs to keep the best CDS and/or whole-genome hits per query ([`BLAST_filter`])
-7. Build a .tsv table with the best hits for every TRG ([`TRG_table`])
-8. Turn the appropriate whole-genome best hits into a separated input file per neighbor genome for `check_synteny` ([`check_synteny_inputs`])
-9. Identify the orthologs genes bewteen the genome of interest and each of its neighbors ([`orthologs`])
-   1. Blastp the CDS of the genome against its neighbor and the other way around with :
-      1. BLAST ([`BLAST`](https://blast.ncbi.nlm.nih.gov/Blast.cgi))
-      2. DIAMOND ([`DIAMOND_BLAST`](https://github.com/bbuchfink/diamond))
-   2. For each genome-of-interest/neighbor-genome pairs, get two list of best hits as .tsv files ([`best_hits`])
-   3. Build a mapping .tsv files from mRNA to their parent gene for every genome ([`mRNA_to_gene`])
-   4. For each genome-of-interest/neighbor-genome pairs, get their orthologs in a .tsv file ([`reciprocal_best_hits`])
-10. Check if TRG/whole-genome homologs are in synteny ([`check_synteny`])
-11. Interpret TRG homologs +/- synteny according to the given strategy and add the output to the main .tsv table ([`results`])
-
 ## Usage
 
-> **Note**
-> If you are new to Nextflow, please refer to [this page](https://www.nextflow.io/docs/latest/getstarted.html) on how
-> to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
+> **1. Nextflow**
+> 
+> Before anything, you need to set-up a Nextflow.
+If you do not have Nextflow yet, you can find the instructions here : [this page](https://www.nextflow.io/docs/latest/getstarted.html). Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
 > with `-profile test` before running the workflow on actual data.
 
 <!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
@@ -68,6 +51,54 @@ To test your Nextflow installation you can use :
 ```bash
 nextflow run hello
 ```
+
+> **2. Download the NR**
+> 
+>DENSE works with three major steps summarised earlier. You can decide to follow the whole pipeline, or to enter the software directly at the second step, with your own list of TRGs. If you start at the beginning of the pipeline, you need to download the Refseq Non-redundant protein database  (NR). The installation can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.
+>
+> To download the NR, you can follow the pipeline of [this page](https://github.com/josuebarrera/GenEra/wiki/Setting-up-the-database(s))
+>
+> 
+> **3. Taxid.tsv**
+>
+> If you start at the beginning of the pipeline, you also need to create a file called taxid.tsv.
+>
+> This part is, unfortunately so far, a manual part. In this taxid file, you need to write the name of each genome (focal and all targets) provoded to the software, associated with their taxid.
+>
+>  For example, let say that you focal is *Drosophila melanogaster*, and you have two target genomes, *Drosophila virilis* and *Drosophila simulans*, that you want to use to conduct the synteny analysis.
+let say you named your genomes in the following way :
+> 
+> dmel.fasta
+> 
+> dvir.fasta
+> 
+> dsim.fasta
+>
+> to know the taxid associated to your species, you have two options:
+>
+> * If the GFF3 files associated to your genomes were extracted from genbank, normaly the Taxid is included in the header lines of your GFF3. it corresponds to a number. For example, the taxid of *Drosophila melanogaster* is 7227.
+> * Otherwise, the taxady has to be retrieve from Taxonomy browser : [this page](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi). There, simply write the name of you species, and the website will gove you the taxonomy ID, that you have to conserv.
+>
+> Once you have the ID of all of your species, you can write down your Taxid.tsv file, that would look like that in our example:
+```
+dmel 7227
+dvir 7244
+dsim 7240
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Now, you can run the pipeline using:
 
