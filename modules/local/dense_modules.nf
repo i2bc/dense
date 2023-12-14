@@ -133,16 +133,9 @@ process EXTRACT_CDS {
 	# -V discard any mRNAs with CDS having in-frame stop codons
 	# -x : write a fasta file with spliced CDS for each GFF transcript
 	gffread -V -g $fasta -x ${name}_CDS.fna gff_filterB
-
-
-	# Linearize the .fna file (credits to https://gist.github.com/lindenb/2c0d4e11fd8a96d4c345).
-	linearizefasta.sh ${name}_CDS.fna > ${name}_CDS.fna_linear
-	mv ${name}_CDS.fna_linear ${name}_CDS.fna
 	
-
-	# Get the translated CDS FASTA.
-	translate.sh ${name}_CDS.fna
-
+	# Remove CDS missing a terminal stop codon and get a translated version of the FASTA.
+	discard_CDS_missing_terminal_stop_codon.sh ${name}_CDS.fna
 	"""
 }
 
