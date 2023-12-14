@@ -8,11 +8,11 @@
 
 **DENSE** is a software that uses a focal annotated genome and detects the genes from this genome that have emerged *de novo*.
 
-**DENSE** uses a genome of interest (Focal) and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files). The pipeline includes the following steps :
+**DENSE** uses a genome of interest (focal) and its phylogenetic neighbours (genomes FASTA and GFF3 annotation files). The pipeline includes the following steps :
 
-* In your Focal genome, **DENSE** identifies all taxonomically restricted genes (TRGs), that have no homology against all other proteins in the Refseq Non-redundant protein database (NR), with help of phylostratigraphy.
-* **DENSE** then identifies non-coding regions that are homologous to the TRG genes in genomes phylogenetically close to the TRGs (selected by the user).
-* **DENSE** finally determines whether the homologous non-coding regions are syntenic with their TRG genes. It generates a file containing all of the TRGs that have emerged *de novo*.
+* In your focal genome, **DENSE** identifies all taxonomically restricted genes (TRGs), that have no homology to any other protein from the Refseq Non-redundant protein database (NR), with the additionaly use of phylostratigraphy.
+* **DENSE** then identifies the non-coding regions that are homologous to the TRG in the genomes of species phylogenetically close to your focal species (selected by the user).
+* **DENSE** finally determines whether the homologous non-coding regions are syntenic with their TRGs. It generates a file containing all of the TRGs that have emerged *de novo*.
 
 ![dag.png](docs/images/flowchart_vs5.png)
 
