@@ -16,7 +16,7 @@
   
 * **DENSE** finally determines whether the homologous non-coding regions are syntenic with their TRGs. It generates a file containing all of the TRGs that have emerged *de novo*.
 
-![nf-core/denovogenes](docs/images/flowchart_vs5.png) ![nf-core/denovogenes](docs/images/flowchart_vs5.png#gh-dark-mode-only)
+![dag.png](docs/images/flowchart_vs5.png)
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
