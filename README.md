@@ -178,6 +178,30 @@ params {
 
 Previously, we presented the basic options that you need to run **DENSE**. However, the software includes a lot of flexibility, and the user can decide on a lot more parameters.
 
+  
+| Field  | option  | value  | description  |
+|:---|:---:|:---:|:---|
+|  Input/output options |  --outdir |  [string]  |  The output directory where the results will be saved |
+|   | --gendir  | [string]  |  The input directory that contains a genomic FASTA file ('.fna','.fasta') and a GFF3 annotation file ('.gff','.gff3') for each genome (focal and neighbors) |
+|   | --focal  | [string]  | The name of the focal genome (the one whose CDS will be tested)   |
+|   |  --strategy | [integer]  | The strategy number to apply : 1->TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match ; 2->TRG has a non-coding match in a genome without any CDS match ; 3->TRG is orphan [default: 1]  |
+| Supplemental parameters  |  --tree | [string]  |  The phylogenetic tree that shows relations between the genomes (Newick format) |
+|   |  --help  |  [boolean] | display the options  |
+| TRG list options  |  --trgsblastdir | [string]  |  A directory with the (precomputed) BLAST output necessary for TRG homologs detection. Two files per neighbor genome, must be named 'TRG_multielongated_blastp_${neighbor}_CDS_elongated.out' and 'TRG_multielongated_tblastn_${neighbor}_genome.out'. Incompatible with the following parameters. |
+|   |  --trgs | [string]  | A text file with a predefined list of CDS to consider as TRGs (incompatible with the following parameters)  |
+|   |  --genera_out |  [string] | A '.tsv' file with precomputed gene ages from genEra. Makes '--genera_db' useless  |
+|   | --genera_db  |  [string] | The directory that contains : nr.dmd. Necessary if a list of TRGs is not provided ('--TRGs')  |
+|   |  --taxdump | [string]  | The taxdump directory path (otherwise downloaded)  |
+|   | --taxids  |  [string] | A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors)  |
+|   |  --trg_node |  [string] |  A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank') |
+|   | --trg_rank  | [string]  |  A taxonomic rank (e.g. 'order') to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_node'). [default: genus] |
+|  Synteny parameters |  --synteny | [boolean]  |  Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters. [default: true]  |
+|   | --anchors  | [integer]  |  The number of anchor genes to collect on each side (5' and 3') of the TRG and on each side of its non-coding hit. The program will try to identify ortholog pairs between these anchors. If at least one pair is found on each side of the TRG-non-coding-hit pair, then the synteny will be confirmed. [default: 4] |
+|   |  --orthodir |  [string] |  A directory with the precomputed pairs of orthologous genes for each focal-neighbor genomes pair. One file per genomes pair, must be named '${focal}_${neighbor}_orthologs.tsv'. Incompatible with the following parameters. |
+|   | --blastdir  |  [string] | A directory with the (precomputed) BLAST output necessary for orthologs detection. Two files per genomes pair, must be named '--orthodir'.   |
+|   |  --blasttool |  [string] |  The tool to perform alignments. (accepted: blast, diamond) [default: diamond] |
+|   | --diamond_sens  | [string]  | The tool to perform alignments. (accepted: fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive)  |
+
 
 
 For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/DENSE/usage) and the [parameter documentation](https://nf-co.re/DENSE/parameters).
