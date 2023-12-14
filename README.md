@@ -96,7 +96,7 @@ dsim 7240
 DENSE runs with the following command line : 
 
 ```bash
-./nextflow run proginski/dense -profile apptainer -resume -c my_options.config -r dev
+./nextflow run proginski/dense -profile apptainer -resume -c my_options.config
 
 ```
 
