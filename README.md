@@ -129,15 +129,6 @@ Here is an example of the config file "my_config.config", that you can copy and 
 ```
 params {
 
-    config_profile_name        = 'YOUR NAME profile'
-    config_profile_description = 'If you want, describe your job'
-
-    // The maximum of ressources you can allow to one job :
-    max_cpus   = 16
-    max_memory = '6.GB'
-    max_time   = '6.h'
-
-    // Input data
     taxids = "PATH TO YOUR taxids.tsv"
     gendir = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
     focal genome = "Name of your focal genome. In our example : dmel"  
@@ -157,15 +148,6 @@ If you run DENSE from the step 3, which means that you already have a list of TR
 ```
 params {
 
-    config_profile_name        = 'YOUR NAME profile'
-    config_profile_description = 'If you want, describe your job'
-
-    // The maximum of ressources you can allow to one job :
-    max_cpus   = 16
-    max_memory = '6.GB'
-    max_time   = '6.h'
-
-    // Input data
     gendir = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
     focal genome = "Name of your focal genome. In our example : dmel"  
     strategy = 2
