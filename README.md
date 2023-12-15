@@ -56,7 +56,11 @@ nextflow run hello
 
 > **2. Download the NR**
 > 
->DENSE follows three major steps summarised earlier. You can decide to follow the whole pipeline, or to start the software directly at the second step, if you already have your own list of TRGs. If you start at the beginning of the pipeline, you need to download the Refseq Non-redundant protein database  (NR). The installation can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.
+>DENSE follows three major steps summarised earlier.
+> You can decide to follow the whole pipeline, or to start the software directly at the second step, if you already have your own list of TRGs.
+>
+If you start at the beginning of the pipeline: 
+> You need to download the Refseq Non-redundant protein database  (NR). The installation can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.
 >
 To download the NR, you can follow the pipeline of [this page](https://github.com/josuebarrera/GenEra/wiki/Setting-up-the-database(s))
 >
