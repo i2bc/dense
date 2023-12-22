@@ -13,10 +13,10 @@ version : sept-2023
 This program tests if a given object from genome A is in micro-synteny with a
 given object from genome B.
 
-In other words, it looks for genes around a given position in genome A and try
-to find their ortholog around the given position in genome B.
+In other words, it looks for genes around a given interval in genome A and try
+to find their ortholog around a given interval in genome B.
 
-It can perform a synteny check between any pair objects A-B. Object A or
+It can perform a synteny check between any interval/object pair A-B. Object A or
 B can be :
     - any genomic region defined with a sequence (often a chromosome), a start
     (0-based), and a stop (included),
@@ -25,7 +25,7 @@ B can be :
 
 Examples of questions it can answer :
 
-    - "Is the gene-HBB in Human in synteny with gene-HBB in Chimpanzee ?"
+    - "Is the gene-HBB in Human in synteny with gene-HBB in the Chimpanzee ?"
 
     - "Is transcript:Os04t0508150-01 in Oryza sativa in synteny with the region
     20605296 to 20604985 on the fourth chromosome of Oryza meridionalis ?
@@ -34,7 +34,7 @@ Examples of questions it can answer :
 It takes as input :
     - the GFF3 annotation file for genome A
     - the GFF3 annotation file for genome B
-    - a .tsv file with object from genome A and object from genome B
+    - a .tsv file with objects from genome A and objects from genome B
     (see --help for details)
     - a .tsv file with pairs of orthologous genes bewteen the two genomes :
         - column 1 : gene from genome A
@@ -140,6 +140,9 @@ def micro_syteny_mapping_interpreter(mapping,
     except ValueError:
         print("ValueError: Duplicated markers are not allowed.")
         nb_rearrangements = -1
+    except TypeError:
+        print("TypeError: An int has been used instead of a letter because all the alphabet letters have already been used.")
+        nb_rearrangements = -1
         
     # Count the number of orthologs found in B for each 'side' (upstream,
     # downstream, and overlapping).
@@ -156,12 +159,12 @@ def micro_syteny_mapping_interpreter(mapping,
         [i for i in B_ortho_index if 'downstream' in mapping['B position'][i]])
 
     # Interpretation
-    print("nb_ins {}".format(nb_insertions))
-    print("nb_del {}".format(nb_deletions))
-    print("nb_rea {}".format(nb_rearrangements))
-    print("nb_up {}".format(nb_ortho_up))
-    print("nb_ov {}".format(nb_ortho_ov))
-    print("nb_do {}".format(nb_ortho_do))
+    # print("nb_ins {}".format(nb_insertions))
+    # print("nb_del {}".format(nb_deletions))
+    # print("nb_rea {}".format(nb_rearrangements))
+    # print("nb_up {}".format(nb_ortho_up))
+    # print("nb_ov {}".format(nb_ortho_ov))
+    # print("nb_do {}".format(nb_ortho_do))
 
     if nb_insertions <= ins_max and nb_deletions <= del_max and nb_rearrangements <= rea_max and nb_ortho_up >= up_min and nb_ortho_ov >= ov_min and nb_ortho_do >= do_min:
 
@@ -200,7 +203,7 @@ def micro_synteny_mapper(
         - 'mapping' : the mapping dictionnary
         - 'stats' : the list of statistics about the mapping.
 
-    Orders genes in 5' -> 3' sens for both genomic regions.
+    Orders genes in 5' -> 3' sense for both genomic regions.
     Makes a transformed version of the two ordered sets where orthologous genes
     between A and B are represented with the same letter.
 
@@ -261,24 +264,32 @@ def micro_synteny_mapper(
         # For A_obj, just rename genes with alphabet letters, in the 5' -> 3'
         # order
         A_objs[A_obj]['letters'] = []
-        alphabet = list(string.ascii_uppercase)
+        genes_seen = {} # Just to verify that a gene is not found more than once in A_obj
+        alphabet = list(string.ascii_uppercase) # 26 possible letters
         i = 0
         for gene in A_objs[A_obj]['genes']:
 
             if gene == EMPTY_CHAR:
-
                 A_objs[A_obj]['letters'].append(EMPTY_CHAR)
 
             else:
+                if gene in genes_seen: # If the gene is found more than once in A_obj (typically, a gene that includes the query interval)
+                    A_objs[A_obj]['letters'].append(genes_seen[gene])
+                else:
+                    if i < len(alphabet):
+                        letter = alphabet[i]
+                    else : # Means that there are more than 26 genes in A_obj
+                        letter = str(i+1)
 
-                A_objs[A_obj]['letters'].append(alphabet[i])
-                i += 1
+                    A_objs[A_obj]['letters'].append(letter)
+                    genes_seen[gene] = letter
+                    i += 1
+
 
         B_objs[B_obj]['letters'] = []
         for gene in B_objs[B_obj]['genes']:
 
             if gene == EMPTY_CHAR:
-
                 B_objs[B_obj]['letters'].append(EMPTY_CHAR)
 
             elif gene in orthologs_df['B'].values:
@@ -342,16 +353,25 @@ def closest_genes(bed, gff_path, n):
     - 'n' as the number of genes to collect for upstream and downstream genes.
     """
 
-    # Collect the 1000 closest intervals to each object (we cannot filter gene
-    # objects directly)
-    gff = BedTool(gff_path).sort()
-    closest_intervals = BedTool(bed).closest(gff, k=1000, D="ref")
+    # Get a sorted GFF3 with only genes
+    gff = BedTool(gff_path).filter(lambda feature: feature[2] == "gene").sort()
 
-    # Filter and keep only genes
-    clst_genes = BedTool(
-        [interval for interval in closest_intervals if interval.fields[5] == "gene"])
+    # Collect the 100 closest genes to each object 
+    closest_intervals = BedTool(bed).closest(gff, k=100, D="ref")
+    
+    # Convert BedTool object to list
+    clst_genes_list = [interval for interval in closest_intervals]
 
-    # Get the n non-overlapping upstream and downstream genes
+    # Convert list to set to remove duplicates (seems to be a necessary sometimes beacause of a weird behavior of BedTool.closest())
+    clst_genes_list = list(set(clst_genes_list))
+
+    # Sort list by distance using Python's built-in sort function
+    clst_genes_list.sort(key=lambda x: abs(int(x.fields[-1])))
+
+    # Convert list back to BedTool object
+    clst_genes = BedTool(clst_genes_list)
+
+    ### Get the n non-overlapping upstream and downstream genes ###
 
     bed_genes_dic = {}
 
@@ -371,36 +391,30 @@ def closest_genes(bed, gff_path, n):
 
             read_on = True
 
-        if read_on:
 
-            # line.count represents the distance in nucleotides, to the object's
-            # interval borders
+        # line.count represents the distance in nucleotides, to the object's
+        # interval borders
+            
+        def get_gene_id(line):
+            try:
+                return re.search(r".*ID=([^;]+).*", line.fields[11]).group(1)
+            except:
+                print(f"No '.*ID=([^;]+).*' found in line: {line}")
+                sys.exit()
+            
+        # If the gene is included in or overlapping the object :
+        if line.count == 0:
+            bed_genes_dic[obj_int]['overlap'].append(get_gene_id(line))
 
-            # If the gene is included in or overlapping the object :
-            if line.count == 0:
+        # If the gene is upstream the object and we need more upstream
+        # genes :
+        elif len(bed_genes_dic[obj_int]['upstream']) < n and line.count < 0:
+            bed_genes_dic[obj_int]['upstream'].append(get_gene_id(line))
 
-                bed_genes_dic[obj_int]['overlap'].append(
-                    re.search(r".*ID=([^;]+).*", line.fields[11]).group(1))
-
-            # If the gene is upstream the object and we need more upstream
-            # genes :
-            elif len(bed_genes_dic[obj_int]['upstream']) < n and line.count < 0:
-
-                bed_genes_dic[obj_int]['upstream'].append(
-                    re.search(r".*ID=([^;]+).*", line.fields[11]).group(1))
-
-            # If the gene is downstream the object and we need more downstream
-            # genes :
-            elif len(bed_genes_dic[obj_int]['downstream']) < n and line.count > 0:
-
-                bed_genes_dic[obj_int]['downstream'].append(
-                    re.search(r".*ID=([^;]+).*", line.fields[11]).group(1))
-
-            # If he gene was not selected because we have enough for this
-            # object :
-            elif len(bed_genes_dic[obj_int]['downstream']) >= n:
-
-                read_on = False
+        # If the gene is downstream the object and we need more downstream
+        # genes :
+        elif len(bed_genes_dic[obj_int]['downstream']) < n and line.count > 0:
+            bed_genes_dic[obj_int]['downstream'].append(get_gene_id(line))
 
     return (bed_genes_dic)
 
