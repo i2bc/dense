@@ -6,42 +6,27 @@
 ** BOTH DOCUMENTATION AND SCRIPTS ARE NOT COMPLETED OR UP TO DATE**
 ** PLEASE WAIT FOR EARLY 2024 **
 
-**DENSE** is a bioinformatics pipeline that finds genes that have emerged *de novo* (e.i. from non-coding DNA).
+**DENSE** is a software that uses a focal annotated genome and detects the genes from this genome that have emerged *de novo*.
 
-It uses a genome of interest and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files).
+**DENSE** uses a genome of interest (focal) and its phylogenetic neighbours (genomes FASTA and GFF3 annotation files). The pipeline includes the following steps :
 
-Starting from genes that are taxonomically restricted (e.i. TRG), it offers severals features to characterize young *de novo* genes, including :
-* identifying non-coding homologous regions in the neghbor genomes,
-* checking that these regions are in synteny with the potential *de novo* genes.  
+* In your focal genome, **DENSE** identifies all taxonomically restricted genes (TRGs), that have no homology to any other protein from the Refseq Non-redundant protein database (NR), with the additional use of phylostratigraphy.
+  
+* **DENSE** then identifies the non-coding regions that are homologous to the TRG in the genomes of species phylogenetically close to your focal species (selected by the user).
+  
+* **DENSE** finally determines whether the homologous non-coding regions are syntenic with their TRGs. It generates a file containing all of the TRGs that have emerged *de novo*.
 
-![dag.png](docs/images/dag.png)
+![dag.png](docs/images/flowchart_vs6.png)
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
 
-1. Check the genome files and the newick tree ([`check_inputs`])
-2. Generate a .tsv file with the distances bewteen genomes ([`tree_distances`])
-3. Exctract the coding sequences (CDS) from the genomes ([`exctract_CDS`] [`(gffread)`](https://github.com/gpertea/gffread))
-4. Elongate the CDS to improve the search for homologs ([`multielongate_focal_TRG`] and [`elongate_CDS`])
-5. Blast the taxonomically restricted genes (TRG) against the CDS of the neighbor genomes and against their whole genome ([`BLAST`](https://blast.ncbi.nlm.nih.gov/Blast.cgi))
-6. Filter BLAST outputs to keep the best CDS and/or whole-genome hits per query ([`BLAST_filter`])
-7. Build a .tsv table with the best hits for every TRG ([`TRG_table`])
-8. Turn the appropriate whole-genome best hits into a separated input file per neighbor genome for `check_synteny` ([`check_synteny_inputs`])
-9. Identify the orthologs genes bewteen the genome of interest and each of its neighbors ([`orthologs`])
-   1. Blastp the CDS of the genome against its neighbor and the other way around with :
-      1. BLAST ([`BLAST`](https://blast.ncbi.nlm.nih.gov/Blast.cgi))
-      2. DIAMOND ([`DIAMOND_BLAST`](https://github.com/bbuchfink/diamond))
-   2. For each genome-of-interest/neighbor-genome pairs, get two list of best hits as .tsv files ([`best_hits`])
-   3. Build a mapping .tsv files from mRNA to their parent gene for every genome ([`mRNA_to_gene`])
-   4. For each genome-of-interest/neighbor-genome pairs, get their orthologs in a .tsv file ([`reciprocal_best_hits`])
-10. Check if TRG/whole-genome homologs are in synteny ([`check_synteny`])
-11. Interpret TRG homologs +/- synteny according to the given strategy and add the output to the main .tsv table ([`results`])
-
 ## Usage
 
-> **Note**
-> If you are new to Nextflow, please refer to [this page](https://www.nextflow.io/docs/latest/getstarted.html) on how
-> to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
+> **1. Nextflow**
+> 
+> Before anything, you need to set-up a Nextflow.
+If you do not have Nextflow yet, you can find the instructions here : [this page](https://www.nextflow.io/docs/latest/getstarted.html). Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
 > with `-profile test` before running the workflow on actual data.
 
 <!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
@@ -69,21 +54,141 @@ To test your Nextflow installation you can use :
 nextflow run hello
 ```
 
-Now, you can run the pipeline using:
+> **2. Download the NR**
+> 
+>DENSE follows three major steps summarised earlier.
+> You can decide to follow the whole pipeline, or to start the software directly at the second step, if you already have your own list of TRGs.
+>
+If you start at the beginning of the pipeline: 
+> You need to download the Refseq Non-redundant protein database  (NR). The installation can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.
+>
+To download the NR, you can follow the pipeline of [this page](https://github.com/josuebarrera/GenEra/wiki/Setting-up-the-database(s))
+>
+> 
+> **3. Taxid.tsv**
+>
+> If you start at the beginning of the pipeline, you also need to create a file called taxid.tsv.
+>
+> Unfortunately, so far, this step remains a manual part. In this taxid file, you need to write the name of each genome (focal and all targets) provided to the software, associated with their taxid.
+>
+> For example, let say that you focal is *Drosophila melanogaster*, and you have two target genomes, *Drosophila virilis* and *Drosophila simulans*, that you want to use to conduct the synteny analysis.
 
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
-
-```bash
-nextflow run nf-core/DENSE \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+ Let say you named your genomes in the following way :
+> 
+> dmel.fasta
+> 
+> dvir.fasta
+> 
+> dsim.fasta
+>
+ In order to know the taxid associated with your species, you have two options:
+>
+> * If the GFF3 files associated to your genomes were extracted from Genbank, normally the Taxid is included in the header lines of your GFF3. It corresponds to a number. For example, the taxid of *Drosophila melanogaster* is 7227.
+> * Otherwise, the taxid has to be retrieved from Taxonomy browser : [this page](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi). There, simply write the name of your species, and the website will give you the taxonomic ID, that you have to conserve.
+>
+> Once you have the ID of all of your species, you can write down your Taxid.tsv file, that would look like that in our example:
+```
+dmel 7227
+dvir 7244
+dsim 7240
 ```
 
+> **4. Run DENSE**
+
+> Once all of these steps have been followed, you can run DENSE! :)
+>
+DENSE runs with the following command line : 
+
+```bash
+./nextflow run proginski/dense -profile apptainer -resume -c my_options.config
+
+```
+
+
+> * ` - resume ` : Allows the user to re-use output generated the pipeline, and to re-run DENSE starting where you stopped.
+> * ` -c  your_options.config ` : You can either implement your options in the command line, or use a config file. Given the high number of possible options and the different storage path, we rather recommend to use a config file, that we are presenting below.
+
+If you run DENSE from the beginning, you need the following inputs:
+> * **Your focal genome** in a FASTA format with its GFF3 annotation file, as well as the FASTA and GFF3 file of all the target genomes you want to use for the synteny analysis. Each genome has to be named in the exact same way as its GFF3 annotation file. For example, if you named your genome dmel.fasta, the associated GFF3 file has to be named dmel.gff3.
+
+> * **Link to the NR** previously downloaded
+
+> * **Your Taxid.tsv** that you created at step3
+
+> * **Your strategy**. The assessment of a de novo gene status depends on the biological question of the user and the level of assessment she/he wants to do. You have to choice between three strategies, that will characterise the definition you choose for determining a de novo gene status:
+>   * Strategy 1 : This is the default strategy. the TRG is considered to be a *de novo* gene if it has a non-coding match (an no coding one) in a genome from a species with older divergence time than any genome with a CDS match
+>   
+>   * Strategy 2 : TRG is considered to be a *de novo* gene if it has a non-coding match in a genome without any CDS match
+>
+>   * Strategy 3 : TRG is considered to be a *de novo* gene if it has no coding match to any other species, while at least one non-coding match in an outgroup species.
+
+>
 > **Warning:**
 > Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those
 > provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
 > see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
+
+Here is an example of the config file "my_config.config", that you can copy and fill with your data if you run DENSE from the beginning with the minimal options.
+
+```
+params {
+
+    taxids = "PATH TO YOUR taxids.tsv"
+    gendir = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
+    focal genome = "Name of your focal genome. In our example : dmel"  
+    trg_node = "Here, you have to choose the name of the taxonomic group to which your *de novo* gene is restricted. For example, if your focal genome is from *Drosophila melanogaster*, your TRG node could be *Drosophila melanogaster*, if you are looking for species specific de novo genes, or *Drosophila*, if you search for all *de novo* genes specific to the clade *Drosophila*"
+    strategy = 2
+    genera_db = PATH to the NR
+}
+(END)
+```
+
+If you run DENSE from the step 3, which means that you already have a list of TRGs, you need the following inputs:
+> * **Your Focal genome** in a FASTA format with its GFF3 annotation file, as well as the FASTA and GFF3 file of all the target genomes you want to use for the synteny analysis. Each genome has to be named in the exact same way as its GFF3 annotation file. For example, if you named your genome dmel.fasta, the associated GFF3 file has to be named dmel.gff3.
+
+> * **Your list of TRGs** which a txt file with the name of all of your genes
+> * **Your strategy**.
+
+```
+params {
+
+    gendir = "PATH TO YOUR GENOMES (query and target, with all FASTA and GFF3). Each genome has to be named in the exact same way as its GFF3 annotation file"
+    focal genome = "Name of your focal genome. In our example : dmel"  
+    strategy = 2
+    trgs = Your txt file with you TRGs
+}
+(END)
+```
+
+## Options
+
+Previously, we presented the basic options that you need to run **DENSE**. However, the software includes a lot of flexibility, and the user can decide on a lot more parameters.
+
+  
+| Field  | option  | value  | description  |
+|:---|:---:|:---:|:---|
+|  Input/output options |  --outdir |  [string]  |  The output directory where the results will be saved |
+|   | --gendir  | [string]  |  The input directory that contains a genomic FASTA file ('.fna','.fasta') and a GFF3 annotation file ('.gff','.gff3') for each genome (focal and neighbors) |
+|   | --focal  | [string]  | The name of the focal genome (the one whose CDS will be tested)   |
+|   |  --strategy | [integer]  | The strategy number to apply : 1->TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match ; 2->TRG has a non-coding match in a genome without any CDS match ; 3->TRG is orphan [default: 1]  |
+| Supplemental parameters  |  --tree | [string]  |  The phylogenetic tree that shows relations between the genomes (Newick format) |
+|   |  --help  |  [boolean] | display the options  |
+| TRG list options  |  --trgsblastdir | [string]  |  A directory with the (precomputed) BLAST output necessary for TRG homologs detection. Two files per neighbor genome, must be named 'TRG_multielongated_blastp_${neighbor}_CDS_elongated.out' and 'TRG_multielongated_tblastn_${neighbor}_genome.out'. Incompatible with the following parameters. |
+|   |  --trgs | [string]  | A text file with a predefined list of CDS to consider as TRGs (incompatible with the following parameters)  |
+|   |  --genera_out |  [string] | A '.tsv' file with precomputed gene ages from genEra. Makes '--genera_db' useless  |
+|   | --genera_db  |  [string] | The directory that contains : nr.dmd. Necessary if a list of TRGs is not provided ('--TRGs')  |
+|   |  --taxdump | [string]  | The taxdump directory path (otherwise downloaded)  |
+|   | --taxids  |  [string] | A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors)  |
+|   |  --trg_node |  [string] |  A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank') |
+|   | --trg_rank  | [string]  |  A taxonomic rank (e.g. 'order') to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_node'). [default: genus] |
+|  Synteny parameters |  --synteny | [boolean]  |  Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters. [default: true]  |
+|   | --anchors  | [integer]  |  The number of anchor genes to collect on each side (5' and 3') of the TRG and on each side of its non-coding hit. The program will try to identify ortholog pairs between these anchors. If at least one pair is found on each side of the TRG-non-coding-hit pair, then the synteny will be confirmed. [default: 4] |
+|   |  --orthodir |  [string] |  A directory with the precomputed pairs of orthologous genes for each focal-neighbor genomes pair. One file per genomes pair, must be named '${focal}_${neighbor}_orthologs.tsv'. Incompatible with the following parameters. |
+|   | --blastdir  |  [string] | A directory with the (precomputed) BLAST output necessary for orthologs detection. Two files per genomes pair, must be named '--orthodir'.   |
+|   |  --blasttool |  [string] |  The tool to perform alignments. (accepted: blast, diamond) [default: diamond] |
+|   | --diamond_sens  | [string]  | The tool to perform alignments. (accepted: fast, mid-sensitive, sensitive, more-sensitive, very-sensitive, ultra-sensitive)  |
+
+
 
 For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/DENSE/usage) and the [parameter documentation](https://nf-co.re/DENSE/parameters).
 
