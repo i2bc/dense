@@ -63,6 +63,7 @@ import csv
 import prettytable as pt
 import math
 import os
+import sys
 
 
 # Define how to represent :
@@ -138,10 +139,10 @@ def micro_syteny_mapping_interpreter(mapping,
         )
 
     except ValueError:
-        print("ValueError: Duplicated markers are not allowed.")
+        sys.stderr.write("ValueError: Duplicated markers are not allowed.\n")
         nb_rearrangements = -1
     except TypeError:
-        print("TypeError: An int has been used instead of a letter because all the alphabet letters have already been used.")
+        sys.stderr.write("TypeError: An int has been used instead of a letter because all the alphabet letters have already been used.\n")
         nb_rearrangements = -1
         
     # Count the number of orthologs found in B for each 'side' (upstream,
@@ -362,7 +363,7 @@ def closest_genes(bed, gff_path, n):
     # Convert BedTool object to list
     clst_genes_list = [interval for interval in closest_intervals]
 
-    # Convert list to set to remove duplicates (seems to be a necessary sometimes beacause of a weird behavior of BedTool.closest())
+    # Convert list to set to remove duplicates (seems to be necessary sometimes because of a weird behavior of BedTool.closest())
     clst_genes_list = list(set(clst_genes_list))
 
     # Sort list by distance using Python's built-in sort function
@@ -373,10 +374,15 @@ def closest_genes(bed, gff_path, n):
 
     ### Get the n non-overlapping upstream and downstream genes ###
 
+    def get_gene_id(line):
+        try:
+            return re.search(r".*ID=([^;]+).*", line.fields[11]).group(1)
+        except:
+            sys.stderr.write(f"No '.*ID=([^;]+).*' found in line: {line}\n")
+            sys.exit()
+
     bed_genes_dic = {}
 
-    # This iteration relies on the fact that closest_intervals are sorted by
-    # increasing absolute distance
     for line in clst_genes:
 
         obj_int = '_'.join(line.fields[0:3])
@@ -389,32 +395,25 @@ def closest_genes(bed, gff_path, n):
                 'downstream': []
             }
 
-            read_on = True
+        # If the line is a true result (not a 'no results' line) :
+        if not (line[6] == "-1" and line[7] == "-1"):
 
+            # line.count represents the distance in nucleotides, to the object's
+            # interval borders
+                
+            # If the gene is included in or overlapping the object :
+            if line.count == 0:
+                bed_genes_dic[obj_int]['overlap'].append(get_gene_id(line))
 
-        # line.count represents the distance in nucleotides, to the object's
-        # interval borders
-            
-        def get_gene_id(line):
-            try:
-                return re.search(r".*ID=([^;]+).*", line.fields[11]).group(1)
-            except:
-                print(f"No '.*ID=([^;]+).*' found in line: {line}")
-                sys.exit()
-            
-        # If the gene is included in or overlapping the object :
-        if line.count == 0:
-            bed_genes_dic[obj_int]['overlap'].append(get_gene_id(line))
+            # If the gene is upstream the object and we need more upstream
+            # genes :
+            elif len(bed_genes_dic[obj_int]['upstream']) < n and line.count < 0:
+                bed_genes_dic[obj_int]['upstream'].append(get_gene_id(line))
 
-        # If the gene is upstream the object and we need more upstream
-        # genes :
-        elif len(bed_genes_dic[obj_int]['upstream']) < n and line.count < 0:
-            bed_genes_dic[obj_int]['upstream'].append(get_gene_id(line))
-
-        # If the gene is downstream the object and we need more downstream
-        # genes :
-        elif len(bed_genes_dic[obj_int]['downstream']) < n and line.count > 0:
-            bed_genes_dic[obj_int]['downstream'].append(get_gene_id(line))
+            # If the gene is downstream the object and we need more downstream
+            # genes :
+            elif len(bed_genes_dic[obj_int]['downstream']) < n and line.count > 0:
+                bed_genes_dic[obj_int]['downstream'].append(get_gene_id(line))
 
     return (bed_genes_dic)
 
@@ -655,7 +654,7 @@ def closest_genes_caller(
                 new_int = new_objs_list[i].replace("\t", "_")
 
                 if old_int != new_int and new_int in objs_genes_dic :
-                    print(objs_genes_dic.keys())
+                    # print(objs_genes_dic.keys())
                     print("old : {}, new : {}".format(old_int, new_int))
                     uncorrected_int = objs_genes_dic[new_int]
                     objs_genes_dic[old_int] = uncorrected_int

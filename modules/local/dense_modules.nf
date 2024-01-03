@@ -471,7 +471,7 @@ process BLAST_BEST_HITS {
 	# Get the list of homologs (CDS and whole_genome) for each genome.
 	
 	# Take possible frameshifts into account.
-	bash tblastn_merge_HSPs_from_same_alignment.py $TRG_multielongated_tblastn_genome_out > ${TRG_multielongated_tblastn_genome_out}.processed
+	tblastn_merge_HSPs_from_same_alignment.py $TRG_multielongated_tblastn_genome_out > ${TRG_multielongated_tblastn_genome_out}.processed
 	
 	# Generate a file with the best hit for each query.
 	bash blast_hits_and_best_hits.sh --query_genome $focal --subject_genome $genome_name --in $TRG_multielongated_blastp_CDS_elongated_out 		--type CDS

@@ -34,7 +34,6 @@ validateParameters()
 // Print summary of supplied parameters
 log.info paramsSummaryLog(workflow)
 
-
 // Parameters compatibility
 stop = false
 
