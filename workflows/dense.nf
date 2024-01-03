@@ -81,14 +81,18 @@ if (params.synteny && ! synt_strats.contains(params.strategy)) {
 	log.info "There is no synteny check to perform with strategy ${params.strategy} since there no homolog detection (see '--strategy' and '--synteny')."
 	stop = true
 }
-if (params.synteny && ! params.anchors) {
-	log.info "You need to provide the number of anchor genes to collect to check the synteny (see '--anchors' and '--synteny')."
+if (params.synteny && ! params.synteny_window) {
+	log.info "You need to provide the number of flanking genes to collect to check the synteny (see '--synteny_window' and '--synteny')."
+	stop = true
+}
+if (params.synteny && ! params.synteny_anchors) {
+	log.info "You need to provide how many anchors are needed on each side of the query to validate the synteny (see '--synteny_anchors' and '--synteny')."
 	stop = true
 }
 
-for (key in ['orthodir', 'blastdir']) {
+for (key in ['orthodir']) {
 	if (params[key] && ! synt_strats.contains(params.strategy)) {
-		log.info "There is no synteny check to perform with strategy ${params.strategy} since there no homolog detection (see '--strategy' and '--${key}')."
+		log.info "There is no synteny check to perform with strategy ${params.strategy} since there is no homolog detection (see '--strategy' and '--${key}')."
 		stop = true
 	}
 	if (params[key] && ! params.synteny) {
@@ -139,7 +143,6 @@ if ((!params.trgs && !params.taxids) || (params.taxids && !params.genera_out && 
 	System.exit(0)
 }
 
-if ( params.blastdir ){ log.info "A directory with the precomputed BLAST outputs has been provided : '${params.blastdir}'" }
 if ( params.orthodir ){ log.info "A directory with the precomputed ortholog pairs has been provided : '${params.orthodir}'" }
 log.info ""
 
@@ -446,7 +449,8 @@ workflow DENSE {
 
 		// Test if synteny is conserved between the TRG genomic environment and the one of its noncoding outgroup.
 		CHECK_SYNTENY(
-					  params.anchors,
+					  params.synteny_window,
+					  params.synteny_anchors,
 					  focal_synteny_ch,
 					  synteny_main_ch
 					 )

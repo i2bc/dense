@@ -582,7 +582,8 @@ process CHECK_SYNTENY {
 	// memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
 	
 	input:
-		val anch_nb
+		val window_size
+		val anchors_nb
 		tuple val(focal), path(focal_gff, stageAs:'focal_gff.gff')
 		tuple val(genome), path(genome_gff), path(orthologs), path(input_pairs)
 		
@@ -599,11 +600,11 @@ process CHECK_SYNTENY {
 	--gffB $genome_gff \
 	--ortho $orthologs \
 	--list $input_pairs \
-	--flankA $anch_nb \
-	--flankB $anch_nb \
-	--up_min 1 \
+	--flankA $window_size \
+	--flankB $window_size \
+	--up_min $anchors_nb \
 	--ov_min 0 \
-	--do_min 1 \
+	--do_min $anchors_nb \
 	--insertion 0 \
 	--ins_max -1 \
 	--del_max -1 \
