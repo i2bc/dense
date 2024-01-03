@@ -638,7 +638,7 @@ process SYNTENY_TO_TABLE {
 			neighbor = gensub(/.*_vs_(.*)_synteny.tsv/,"\\\\1","g",FILENAME)
 			query  = \$1
 			target = \$2
-			isSynt = \$9
+			isSynt = \$10
 
 			data[query"_vs_"neighbor":"target]= isSynt
 

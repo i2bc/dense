@@ -47,6 +47,9 @@ A few reminders about GFF3 (https://github.com/The-Sequence-Ontology/Specificati
 
 Orthologous genes from the tsv must be an 'ID' value in the corresponding GFF3
 file, ortherwise they won't be mapped.
+
+Two flanking genes can be found at the exact same distance from the query.
+This might cause some ambiguity in the mapping under certain confirgurations.
 """
 
 
@@ -175,8 +178,10 @@ def micro_syteny_mapping_interpreter(mapping,
 
         isSyntenic = False
 
+    nb_ortho_pairs = min(nb_ortho_up, nb_ortho_do)
+
     return ([nb_insertions, nb_deletions, nb_rearrangements,
-            nb_ortho_up, nb_ortho_ov, nb_ortho_do, isSyntenic])
+            nb_ortho_up, nb_ortho_ov, nb_ortho_do, nb_ortho_pairs, isSyntenic])
 
 
 def micro_synteny_mapper(
@@ -1065,6 +1070,7 @@ def check_synteny():
                       '#ortho upstream',
                       '#ortho overlap',
                       '#ortho downstream',
+                      '#ortho up-down pairs',
                       'isSyntenic']
 
         writer = csv.writer(tsv, delimiter="\t", lineterminator="\n")
