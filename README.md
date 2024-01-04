@@ -160,7 +160,12 @@ params {
 }
 
 ```
-> Find out more ways to use options in Nextflow : [configs](https://www.nextflow.io/docs/latest/config.html) 
+> Find out more ways to use options in Nextflow : [configs](https://www.nextflow.io/docs/latest/config.html)
+
+> [!WARNING]  
+> Two processes are prone to require a lot of computational time and resources.
+> * GENERA : includes a diamond blastp of all translated CDS against the NR database
+> * BLAST : includes a tblastn of all TRG translated CDS against the neighbor genomes. Some queries can have millions of matches
 
 # Options
 see [PARAMETERS.md](PARAMETERS.md)
