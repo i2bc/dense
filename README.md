@@ -165,20 +165,23 @@ params {
 # Options
 see [PARAMETERS.md](PARAMETERS.md)
 
-
 # Pipeline output
-
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/DENSE/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/DENSE/output).
+* denovogenes.tsv : this is the main output. A two columns TSV file (col1: gene, col2:CDS).
+* TRG_match_matrix.tsv : synthetically shows the present/absence (homolog) of every TRG coding sequence among the provided genome.
+* TRG_table.tsv : details all homolog names/coordinates
+* directories with some useful precomputed intermediate files :
+  * genera_results
+  * diamondblast_out
+  * orthologs
+  * blast_out
+  * synteny
 
 # Credits
 
-DENSE was originally written by Paul Roginski.
-
 We thank the following people for their extensive assistance in the development of this pipeline:
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+Ambre Baumann
+Simon Herman
 
 # Citations
 
