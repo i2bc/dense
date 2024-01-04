@@ -1,125 +1,192 @@
-[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
+![DENSE](docs/images/Dense_logo.png)
 
-## Introduction
+[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
+[![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
+[![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
+[![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
 **WARNING : THIS REPOSITORY IS under CONSTRUCTION**
 ** BOTH DOCUMENTATION AND SCRIPTS ARE NOT COMPLETED OR UP TO DATE**
-** PLEASE WAIT FOR EARLY 2024 **
+** PLEASE WAIT FOR A FIRST RELEASE | EARLY 2024 **
 
-**DENSE** is a bioinformatics pipeline that finds genes that have emerged *de novo* (e.i. from non-coding DNA).
+# Introduction
 
-It uses a genome of interest and its phylogenetic neighbors (genomic FASTA, and GFF3 annotation files).
+**DENSE** is a pipeline that detects genes that have emerged *de novo* (from non-coding DNA regions), based on phylostratigraphy and synteny.
 
-Starting from genes that are taxonomically restricted (e.i. TRG), it offers severals features to characterize young *de novo* genes, including :
-* identifying non-coding homologous regions in the neghbor genomes,
-* checking that these regions are in synteny with the potential *de novo* genes.  
+![dag.png](docs/images/flowchart_vs6.png)
 
-![dag.png](docs/images/dag.png)
+**DENSE** uses a genome of interest (focal) and its phylogenetic neighbors (genomes FASTA and GFF3 annotation files). The pipeline includes the following steps :
 
-<!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
-     workflows use the "tube map" design for that. See https://nf-co.re/docs/contributing/design_guidelines#examples for examples.   -->
+* **A :** extracts the coding sequences of all protein coding genes in the focal genome and search for homologs among the Refseq Non-redundant protein database (NR), and the neighbor genomes.
+  
+* **B :** based on the previous step, selects genes that are taxonomically restricted (TRG)
+  
+* **C :** selects TRG with homology in non-coding regions of neighbor genomes. If a phylogenetic tree was provided, DENSE can require from these genomes to be 'outgroup', meaning that there are more distant from the focal genome that any neighbor actually sharing the gene.
+  
+* **D :** DENSE finally determines whether the homologous non-coding regions are in synteny with their TRG (the step can be switch off).  
+It generates a file containing all the genes that have emerged *de novo*.
 
-1. Check the genome files and the newick tree ([`check_inputs`])
-2. Generate a .tsv file with the distances bewteen genomes ([`tree_distances`])
-3. Exctract the coding sequences (CDS) from the genomes ([`exctract_CDS`] [`(gffread)`](https://github.com/gpertea/gffread))
-4. Elongate the CDS to improve the search for homologs ([`multielongate_focal_TRG`] and [`elongate_CDS`])
-5. Blast the taxonomically restricted genes (TRG) against the CDS of the neighbor genomes and against their whole genome ([`BLAST`](https://blast.ncbi.nlm.nih.gov/Blast.cgi))
-6. Filter BLAST outputs to keep the best CDS and/or whole-genome hits per query ([`BLAST_filter`])
-7. Build a .tsv table with the best hits for every TRG ([`TRG_table`])
-8. Turn the appropriate whole-genome best hits into a separated input file per neighbor genome for `check_synteny` ([`check_synteny_inputs`])
-9. Identify the orthologs genes bewteen the genome of interest and each of its neighbors ([`orthologs`])
-   1. Blastp the CDS of the genome against its neighbor and the other way around with :
-      1. BLAST ([`BLAST`](https://blast.ncbi.nlm.nih.gov/Blast.cgi))
-      2. DIAMOND ([`DIAMOND_BLAST`](https://github.com/bbuchfink/diamond))
-   2. For each genome-of-interest/neighbor-genome pairs, get two list of best hits as .tsv files ([`best_hits`])
-   3. Build a mapping .tsv files from mRNA to their parent gene for every genome ([`mRNA_to_gene`])
-   4. For each genome-of-interest/neighbor-genome pairs, get their orthologs in a .tsv file ([`reciprocal_best_hits`])
-10. Check if TRG/whole-genome homologs are in synteny ([`check_synteny`])
-11. Interpret TRG homologs +/- synteny according to the given strategy and add the output to the main .tsv table ([`results`])
+# Table of contents
 
-## Usage
+<!--ts-->
+- [Introduction](#introduction)
+- [Table of contents](#table-of-contents)
+- [Set-up](#set-up)
+  - [1. Nextflow](#1-nextflow)
+  - [2. Container manager](#2-container-manager)
+  - [3. Download the NR (not mandatory)](#3-download-the-nr-not-mandatory)
+- [Input files](#input-files)
+- [Usage](#usage)
+  - [Lucy example](#lucy-example)
+    - [command](#command)
+    - [config file](#config-file)
+  - [Luca example](#luca-example)
+    - [command](#command-1)
+    - [config file](#config-file-1)
+- [Options](#options)
+- [Pipeline output](#pipeline-output)
+- [Credits](#credits)
+- [Citations](#citations)
+<!--te-->
 
-> **Note**
-> If you are new to Nextflow, please refer to [this page](https://www.nextflow.io/docs/latest/getstarted.html) on how
-> to set-up Nextflow. Make sure to [test your setup](https://nf-co.re/docs/usage/introduction#how-to-run-a-pipeline)
-> with `-profile test` before running the workflow on actual data.
+# Set-up
 
-<!-- TODO nf-core: Describe the minimum required steps to execute the pipeline, e.g. how to prepare samplesheets.
-     Explain what rows and columns represent. For instance (please edit as appropriate):
+## 1. Nextflow
 
-First, prepare a samplesheet with your input data that looks as follows:
+Before anything, you need to have an recent Nextflow installed.
+> If you do not have Nextflow yet, you can find simple instructions here : [this page](https://www.nextflow.io/docs/latest/getstarted.html).  
 
-`samplesheet.csv`:
-
-```csv
-sample,fastq_1,fastq_2
-CONTROL_REP1,AEG588A1_S1_L002_R1_001.fastq.gz,AEG588A1_S1_L002_R2_001.fastq.gz
-```
-
-Each row represents a fastq file (single-end) or a pair of fastq files (paired end).
-
--->
 In order to use the latest Nextflow version, you should use:
 ```bash
 nextflow self-update
 ```
+> [!IMPORTANT] 
+> DENSE **requires** Nextflow >=23.04.3. A previous version could lead to errors.
 
 To test your Nextflow installation you can use : 
 ```bash
 nextflow run hello
 ```
 
-Now, you can run the pipeline using:
+## 2. Container manager
 
-<!-- TODO nf-core: update the following command to include all required parameters for a minimal example -->
+In order to use DENSE in an fully-ready and reproducible environment, you need to have a container manager installed on your machine.  
+You can use any of the following :
+* [Apptainer](https://apptainer.org/docs/user/latest/quick_start.html)
+* Singularity
+* [Docker](https://www.docker.com/get-started/)
 
+You can now test **DENSE** on the example data with the following command :
 ```bash
-nextflow run nf-core/DENSE \
-   -profile <docker/singularity/.../institute> \
-   --input samplesheet.csv \
-   --outdir <OUTDIR>
+nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
 ```
 
-> **Warning:**
-> Please provide pipeline parameters via the CLI or Nextflow `-params-file` option. Custom config files including those
-> provided by the `-c` Nextflow option can be used to provide any configuration _**except for parameters**_;
-> see [docs](https://nf-co.re/usage/configuration#custom-configuration-files).
+## 3. Download the NR (not mandatory)
 
-For more details and further functionality, please refer to the [usage documentation](https://nf-co.re/DENSE/usage) and the [parameter documentation](https://nf-co.re/DENSE/parameters).
+In order to detect taxonomically restricted genes (TRG), DENSE uses [GenEra](https://github.com/josuebarrera/GenEra) to search the Refseq Non-redundant protein database (NR). 
 
-## Pipeline output
+To download and properly install the NR along with taxonomic data, you can follow [these instructions](https://github.com/josuebarrera/GenEra/wiki/Setting-up-the-database(s)).
 
-To see the results of an example test run with a full size dataset refer to the [results](https://nf-co.re/DENSE/results) tab on the nf-core website pipeline page.
-For more details about the output files and reports, please refer to the
-[output documentation](https://nf-co.re/DENSE/output).
+>The downloading step can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.  
+>You can ignore this step if you want to use you own user-defined TRG list instead (see Usage).
 
-## Credits
+# Input files
+To run DENSE you always need a directory that contains a genomic FASTA file ('.fna','.fasta') and a GFF3 annotation file ('.gff','.gff3') for each genome (focal and neighbors, e.g. : the mouse and some close rodents). `--gendir`
+>GFF3 files must have a classical CDS < mRNA < gene parent relationship between features.
 
-nf-core/DENSE was originally written by Paul Roginski.
+If you want to use DENSE the most complete way, you also need :
+* The phylogenetic tree that shows relations between the genomes (Newick format) `--tree`
+* A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors) `--taxids`
+
+> Get the taxid of your species:
+> * GFF3 files from NCBI have a header line.
+> ##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=\<TAXID\>
+> * Find your organism on the [NCBI Taxonomy browser](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi).
+>
+>Then you can write a file similar to this one : 
+>```
+>Droso_melanogaster  7227
+>Droso_virilis   7244
+>Droso_simulans  7240
+>...
+>```
+
+# Usage
+## Lucy example
+Lucy has a favorite species. She wants to collect genes from that species with the best indications of *de novo* emergence.  
+Therefore, she runs a complete DENSE analysis.  
+Since her HPC's admin does not like Docker (they *all* do), she uses [Apptainer](https://apptainer.org/docs/user/latest/quick_start.html).
+### command
+```
+nextflow run proginski/dense -profile apptainer -c Lucy.config
+```
+### config file
+Lucy.config content : 
+```
+params {
+    
+    gendir    = "../GENOMES/"     // a directory that contains favorite.fna, favorite.gff3, cousin1.fna, cousin1.gff3, cousin2.fna, cousin2.gff3, ...
+    focal     = "favorite"       // the name of the focal genome
+
+    tree      = "family_tree.nwk" // a tree with the same names as the genome files 
+    genera_db = "../../../nr/"    // the path to the 'nr.dmd' parent directory
+    taxids    = "taxids.tsv"      // see the Input files section
+    
+}
+```
+## Luca example
+Luca has dozen of annotated strains from its most cherished Yeast. 
+He wants to know if its first strain has genes that seem to have emerged de novo by comparison with the eleven other strains.  
+He already has a list of orphan genes for this yeast, and so he provides it to DENSE (basically skip step A and B) (`trgs`).  
+He does not know the evolutionary relationship between the genomes (no `tree` and `strategy = 2`).  
+He does not care about checking the synteny (`synteny = false`).  
+He changed his mind about this options in the middle of a first analysis, so this time he use `-resume` to reuse pre-computed steps.
+### command
+```
+nextflow run proginski/dense -profile docker -c Luca.config -resume
+```
+### config file
+Luca.config content :
+```
+params {
+    
+    gendir   = "input_file/"              // a directory that contains strain1.fna, strain1.gff3, strain2.fna, strain2.gff3, etc...
+    focal    = "strain1"                  // the name of the focal genome
+
+    trgs     = "list_of_orphan_genes.txt" // see the Input files section
+    strategy = 2                          // select any TRG with a non-coding homolog region (and no coding homolog) of a neighbor.
+    synteny  = false                      // turn off synteny checking 
+    
+}
+
+```
+> Find out more ways to use options in Nextflow : [configs](https://www.nextflow.io/docs/latest/config.html) 
+
+# Options
+see [PARAMETERS.md](PARAMETERS.md)
+
+# Pipeline output
+* denovogenes.tsv : this is the main output. A two columns TSV file (col1: gene, col2:CDS).
+* TRG_match_matrix.tsv : synthetically shows the present/absence (homolog) of every TRG coding sequence among the provided genome.
+* TRG_table.tsv : details all homolog names/coordinates
+* directories with some useful precomputed intermediate files :
+  * genera_results
+  * diamondblast_out
+  * orthologs
+  * blast_out
+  * synteny
+
+# Credits
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
-<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
+Ambre Baumann  
+Simon Herman
 
-## Contributions and Support
+# Citations
 
-If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
-
-For further information or help, don't hesitate to get in touch on the [Slack `#DENSE` channel](https://nfcore.slack.com/channels/DENSE) (you can join with [this invite](https://nf-co.re/join/slack)).
-
-## Citations
-
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi and badge at the top of this file. -->
-<!-- If you use  nf-core/DENSE for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
+If you use  DENSE for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX)
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
-
-You can cite the `nf-core` publication as follows:
-
-> **The nf-core framework for community-curated bioinformatics pipelines.**
->
-> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
->
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).

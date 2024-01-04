@@ -1,0 +1,67 @@
+## Input/output options
+Define where the pipeline should find input data and save output data.
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| outdir | The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure. |  |
+| gendir | The input directory that contains a genomic FASTA file ('.fna','.fasta') and a GFF3 annotation file ('.gff','.gff3') for each genome (focal and neighbors). |  |
+
+## Required input values
+
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| focal | The name of the focal genome (the one whose CDS will be tested). |  |
+| strategy | The strategy number to apply : 1->TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match ; 2->TRG has a non-coding match in a genome without any CDS match ; 3->TRG is orphan | 1 |
+
+## Other important parameters
+
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| tree | The phylogenetic tree that shows relations between the genomes (Newick format). E.g. "((Ptep:0.75680000,Pruf:0.75680000)'210':0.38205000,Pfoa:1.13885000)'220';" |  |
+| help | Throws this page. |  |
+
+## Institutional config options
+Parameters used to describe centralised config profiles. These should not be edited.
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| config_profile_name | Institutional config name. |  |
+| config_profile_description | Institutional config description. |  |
+
+## Max job request options
+Set the top limit for requested resources for any single job.
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| max_cpus | Maximum number of CPUs that can be requested for any single job. | 16 |
+| max_memory | Maximum amount of memory that can be requested for any single job. | 128.GB |
+| max_time | Maximum amount of time that can be requested for any single job. | 240.h |
+
+## TRG list options
+
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| trgsblastdir | A directory with the (precomputed) BLAST output necessary for TRG homologs detection. Two files per neighbor genome, must be named 'TRG_multielongated_blastp_${neighbor}_CDS_elongated.out' and 'TRG_multielongated_tblastn_${neighbor}_genome.out'. Incompatible with the following parameters. |  |
+| trgs | A text file with a predefined list of CDS to consider as TRGs (incompatible with the following parameters). |  |
+| genera_out | A '.tsv' file with precomputed gene ages from genEra. Makes '--genera_db' useless. |  |
+| genera_db | The directory that contains : nr.dmd. Necessary if a list of TRGs is not provided ('--TRGs'). |  |
+| taxdump | The taxdump directory path (otherwise downloaded). |  |
+| taxids | A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors). |  |
+| trg_node | A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank'). |  |
+| trg_rank | A taxonomic rank (e.g. 'order') to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_node'). | genus |
+
+## Synteny checking
+
+
+| Parameter | Description | Default |
+| --- | --- | --- |
+| synteny | Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters. | True |
+| synteny_window | The number of flanking genes to collect on each side (5' and 3') of the TRG and on each side of its non-coding hit. | 4 |
+| synteny_anchors | The minimum number of genes on each side of the TRG that should have their ortholog on one side of its non-coding hit. E.g. : out of 4 flanking genes (set with synteny_window), 3 upstream genes have their ortholog among the flanking genes of the non-coding hit, and 2 for downtream genes. The synteny will be assumed if synteny_anchors is set to 1 or 2, but not 3 or more, because there are only 2 'anchors' on the downstream side of the query. | 1 |
+| orthodir | A directory with the precomputed pairs of orthologous genes for each focal-neighbor genomes pair. One file per genomes pair, must be named '${focal}_${neighbor}_orthologs.tsv'. Incompatible with the following parameters. |  |
+| orthotool | The tool to perform alignments for orthologs definition. | diamond |
+| diamond_sens | Diamond sensitivity. |  |
+

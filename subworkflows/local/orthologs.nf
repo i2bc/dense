@@ -31,45 +31,35 @@ workflow ORTHOLOGS {
 
 
 	// First, get the pairwise alignments.
-	if ( params.blastdir ) {
-		
-		//A directory with the BLAST outputs was provided.
-		// Mimic the BLAST process output.
-		BLAST_out_ch = neighbors_ortho_ch
-		.map { name, gff, CDS_faa -> [ params.focal, name, file("${params.blastdir}/${params.focal}_CDS_BLASTp_${name}_CDS.out"), file("${params.blastdir}/${name}_CDS_BLASTp_${params.focal}_CDS.out") ] }
 
-	} else {
+	// For each focal genome/genome pair, perform two BLASTp :
+	// - focal genome translated CDS against genome translated CDS
+	// - genome translated CDS against focal genome translated CDS
+	neighbor_blast_ch = neighbors_ortho_ch
+	.map { name, gff, CDS_faa -> [ name, CDS_faa ] }
 
-		// For each focal genome/genome pair, perform two BLASTp :
-		// - focal genome translated CDS against genome translated CDS
-		// - genome translated CDS against focal genome translated CDS
-		neighbor_blast_ch = neighbors_ortho_ch
-		.map { name, gff, CDS_faa -> [ name, CDS_faa ] }
+	if ( params.orthotool == "diamond" ){
 
-		if ( params.blasttool == "diamond" ){
-
-			if (params.diamond_sens) {
-				sensitivity = "--${params.diamond_sens}"
-			} else {
-				sensitivity = ""
-			}
-			DIAMOND_BLAST(
-							focal_ortho_ch,
-							neighbor_blast_ch,
-							sensitivity
-						  )
-			BLAST_out_ch = DIAMOND_BLAST.out
-
+		if (params.diamond_sens) {
+			sensitivity = "--${params.diamond_sens}"
+		} else {
+			sensitivity = ""
 		}
-		if ( params.blasttool == "blast" ){
+		DIAMOND_BLAST(
+						focal_ortho_ch,
+						neighbor_blast_ch,
+						sensitivity
+						)
+		BLAST_out_ch = DIAMOND_BLAST.out
 
-			BLAST(
-					focal_ortho_ch,
-					neighbor_blast_ch
-				 )
-			BLAST_out_ch = BLAST.out
+	}
+	if ( params.orthotool == "blast" ){
 
-		}
+		BLAST(
+				focal_ortho_ch,
+				neighbor_blast_ch
+				)
+		BLAST_out_ch = BLAST.out
 
 	}
 	

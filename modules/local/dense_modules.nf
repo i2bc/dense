@@ -23,7 +23,7 @@ process CHECK_INPUTS {
 		# Record every genome 
 		{ gn[\$2] = 1 }
 
-		# For any line, if the nb of occurences if not one, record the genome in "pb"
+		# For any line, if the nb of occurences is not one, record the genome in "pb"
 		\$1 != 1 { pb[\$2]=1 }
 
 		# Fasta list
@@ -133,16 +133,9 @@ process EXTRACT_CDS {
 	# -V discard any mRNAs with CDS having in-frame stop codons
 	# -x : write a fasta file with spliced CDS for each GFF transcript
 	gffread -V -g $fasta -x ${name}_CDS.fna gff_filterB
-
-
-	# Linearize the .fna file (credits to https://gist.github.com/lindenb/2c0d4e11fd8a96d4c345).
-	linearizefasta.sh ${name}_CDS.fna > ${name}_CDS.fna_linear
-	mv ${name}_CDS.fna_linear ${name}_CDS.fna
 	
-
-	# Get the translated CDS FASTA.
-	translate.sh ${name}_CDS.fna
-
+	# Remove CDS missing a terminal stop codon and get a translated version of the FASTA.
+	discard_CDS_missing_terminal_stop_codon.sh ${name}_CDS.fna
 	"""
 }
 
@@ -169,7 +162,7 @@ process TAXDUMP {
 			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
 		fi
 		valid_taxdump="${workDir}/taxdump"
-		echo "The taxdump directory is in \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
+		echo "The taxdump directory is \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
 
 	else
 
@@ -478,7 +471,7 @@ process BLAST_BEST_HITS {
 	# Get the list of homologs (CDS and whole_genome) for each genome.
 	
 	# Take possible frameshifts into account.
-	bash tblastn_merge_HSPs_from_same_alignment.sh --in $TRG_multielongated_tblastn_genome_out
+	tblastn_merge_HSPs_from_same_alignment.py $TRG_multielongated_tblastn_genome_out > ${TRG_multielongated_tblastn_genome_out}.processed
 	
 	# Generate a file with the best hit for each query.
 	bash blast_hits_and_best_hits.sh --query_genome $focal --subject_genome $genome_name --in $TRG_multielongated_blastp_CDS_elongated_out 		--type CDS
@@ -567,11 +560,15 @@ process CHECK_SYNTENY_INPUTS {
 		
 	"""
 	touch ${focal}_vs_${genome}_synteny_pairs.tsv
+	# $best_hits represents two files : first the blasp best hits file, then the tblastn best hits file.
 	awk '
 		BEGIN {FS=OFS="\t"}
-		
+		# First the blastp best hits file
 		\$5 == "CDS" { data[\$2\$3] = 1 }
+		# Then the tblastn best hits file
+		# If their is a genome match and no CDS match, the subject is considered as intergenic.
 		\$5== "genome" && (!(\$2\$3 in data)) { 
+			# Print the query (focal) and its best matching DNA region in the neighbor genome., to test if they are syntenic.
 			print gensub(/_elongated.*/,"","g",\$2),gensub(/(.*)_([0-9]+)_([0-9]+)\$/,"\\\\1\t\\\\2\t\\\\3","g",\$4) }' $best_hits > ${focal}_vs_${genome}_synteny_pairs.tsv 
 	"""
 }
@@ -585,7 +582,8 @@ process CHECK_SYNTENY {
 	// memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
 	
 	input:
-		val anch_nb
+		val window_size
+		val anchors_nb
 		tuple val(focal), path(focal_gff, stageAs:'focal_gff.gff')
 		tuple val(genome), path(genome_gff), path(orthologs), path(input_pairs)
 		
@@ -602,11 +600,11 @@ process CHECK_SYNTENY {
 	--gffB $genome_gff \
 	--ortho $orthologs \
 	--list $input_pairs \
-	--flankA $anch_nb \
-	--flankB $anch_nb \
-	--up_min 1 \
+	--flankA $window_size \
+	--flankB $window_size \
+	--up_min $anchors_nb \
 	--ov_min 0 \
-	--do_min 1 \
+	--do_min $anchors_nb \
 	--insertion 0 \
 	--ins_max -1 \
 	--del_max -1 \
@@ -641,7 +639,7 @@ process SYNTENY_TO_TABLE {
 			neighbor = gensub(/.*_vs_(.*)_synteny.tsv/,"\\\\1","g",FILENAME)
 			query  = \$1
 			target = \$2
-			isSynt = \$9
+			isSynt = \$10
 
 			data[query"_vs_"neighbor":"target]= isSynt
 
@@ -674,60 +672,40 @@ process SYNTENY_TO_TABLE {
 }
 
 
-process FILTER_TABLE_WITH_STRATEGY {
-
-	input:
-		val focal
-		val synteny
-		val strategy
-		path TRG_table
-		
-	output:
-		path "TRGs_selected_before_isoform_control.txt"
-		
-	"""
-	filter_table_with_strategy.py --table $TRG_table --strategy $strategy --synteny $synteny --out TRGs_selected_before_isoform_control.txt
-	"""
-}
-
-
-process FILTER_ISOFORMS {
+process TRG_TABLE_TO_MATCH_MATRIX {
 
 	publishDir "${params.outdir}"
 
 	input:
-		path TRGs_selected_before_strategy
-		path TRGs_selected_after_strategy
+		path TRG_table
+		path tree
 		
 	output:
-		path "denovogenes.txt"
+		path "TRG_match_matrix.tsv"
 		
 	"""
-	touch denovogenes.txt
+	TRG_table_to_match_matrix.py $TRG_table $tree --out TRG_match_matrix.tsv
+	"""
+}
 
-	# Compare the list of TRGs before and after applying the slection strategy.
-	# Remove the TRGs with excluded isoforms.
-	awk '
-		BEGIN {FS=OFS="\t"}
 
-		FNR==1 { FNUM++ }
+process MATCH_MATRIX_TO_DE_NOVO_GENES {
 
-		# First file : TRGs_selected_after_strategy
-		FNUM==1 { final[\$0]=1 }
+	publishDir "${params.outdir}"
+
+	input:
+		path match_matrix
+		path TRGs_selected_before_strategy
+		val strategy
+		val synteny
 		
-		# Second file : TRGs_selected_before_strategy
-		FNUM==2 && (!(\$1 in final)){ excluded[\$2]=1 }
+	output:
+		path "denovogenes.tsv"
 		
-		# Third file : TRGs_selected_before_strategy
-		FNUM==3 {
-			if(\$2 in excluded){
-				print \$1 >> "TRG_excluded.txt"
-			}
-			else {
-				print \$0 >> "denovogenes.txt"
-			}
-		}
-
-	' $TRGs_selected_after_strategy $TRGs_selected_before_strategy $TRGs_selected_before_strategy
+	"""
+	match_matrix_to_de_novo_genes.py $match_matrix $TRGs_selected_before_strategy \
+	--strategy $strategy \
+	--synteny $synteny \
+	--out denovogenes.tsv
 	"""
 }
