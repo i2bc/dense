@@ -180,7 +180,7 @@ see [PARAMETERS.md](PARAMETERS.md)
 
 We thank the following people for their extensive assistance in the development of this pipeline:
 
-Ambre Baumann
+Ambre Baumann  
 Simon Herman
 
 # Citations
