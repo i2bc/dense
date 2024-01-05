@@ -76,11 +76,11 @@ if ( !params.taxids && params.genera_db ) {
 	stop = true
 }
 
-def synt_strats = [1, 2]
-if (params.synteny && ! synt_strats.contains(params.strategy)) {
-	log.info "There is no synteny check to perform with strategy ${params.strategy} since there no homolog detection (see '--strategy' and '--synteny')."
-	stop = true
-}
+// def synt_strats = [1, 2]
+// if (params.synteny && ! synt_strats.contains(params.strategy)) {
+// 	log.info "There is no synteny check to perform with strategy ${params.strategy} since there no homolog detection (see '--strategy' and '--synteny')."
+// 	stop = true
+// }
 if (params.synteny && ! params.synteny_window) {
 	log.info "You need to provide the number of flanking genes to collect to check the synteny (see '--synteny_window' and '--synteny')."
 	stop = true
@@ -91,10 +91,10 @@ if (params.synteny && ! params.synteny_anchors) {
 }
 
 for (key in ['orthodir']) {
-	if (params[key] && ! synt_strats.contains(params.strategy)) {
-		log.info "There is no synteny check to perform with strategy ${params.strategy} since there is no homolog detection (see '--strategy' and '--${key}')."
-		stop = true
-	}
+	// if (params[key] && ! synt_strats.contains(params.strategy)) {
+	// 	log.info "There is no synteny check to perform with strategy ${params.strategy} since there is no homolog detection (see '--strategy' and '--${key}')."
+	// 	stop = true
+	// }
 	if (params[key] && ! params.synteny) {
 		log.info "'--${key}' needs '--synteny' to be set to 'true'."
 		stop = true

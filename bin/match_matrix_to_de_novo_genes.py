@@ -18,6 +18,7 @@ Usage:
 """
 import argparse
 import csv
+import sys
 
 # Create the parser
 parser = argparse.ArgumentParser(description='Match matrix to de novo genes')
@@ -36,6 +37,19 @@ args = parser.parse_args()
 #### FILTER THE MATCH MATRIX ####
 de_novo_CDS = []
 not_de_novo_CDS = []
+
+# Define the pattern based on the strategy and synteny
+if args.strategy == 1:
+    if args.synteny == "true":
+        pattern = ["gS*"]
+    else:
+        pattern = ["gS*", "gNS*","gNA*"]
+elif args.strategy == 2 or args.strategy == 3:
+    if args.synteny == "true":
+        pattern = ["gS*", "gS"]
+    else:
+        pattern = ["gS*", "gS", "gNS*", "gNS", "gNA*", "gNA"]
+
 # Open the match_matrix file
 with open(args.match_matrix, 'r') as f:
     reader = csv.reader(f, delimiter='\t')
@@ -46,26 +60,18 @@ with open(args.match_matrix, 'r') as f:
         # Remove the eventual terminal "_elongated" from the CDS name
         if line[0].endswith("_elongated"):
             line[0] = line[0].replace("_elongated", "")
-        # Define the pattern based on the strategy and synteny
-        if args.strategy == 1:
-            if args.synteny == "true":
-                pattern = "gS*"
-            else:
-                pattern = ["gS*", "gNS*"]
-        elif args.strategy == 2:
-            if args.synteny == "true":
-                pattern = ["gS*", "gS"]
-            else:
-                pattern = ["gS*", "gS", "gNS*", "gNS"]
-        elif args.strategy == 3:
-            if line[1] == "CDS" and all("CDS" not in column for column in line[2:]):
-                if args.synteny == "true":
-                    pattern = "gS*"
-                else:
-                    pattern = ["gS*", "gNS*"]
 
-        # Check if the line contains the pattern starting from the second column
-        if any(pattern in column for column in line[1:]):
+        isDeNovo = False
+        # Check if the line contains any string in the pattern starting from the second column
+        if any(any(p in column for p in pattern) for column in line[1:]):
+            if args.strategy == 1 or args.strategy == 2:
+                isDeNovo = True
+            elif args.strategy == 3:
+                # Check if the second column is "CDS" and "CDS" is not in any other column
+                if line[1] == "CDS" and not any("CDS" in column for column in line[2:]):
+                    isDeNovo = True
+
+        if isDeNovo:
             # Store the CDS as de novo
             de_novo_CDS.append(line[0])
         else :

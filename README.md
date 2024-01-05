@@ -21,7 +21,7 @@
   
 * **B :** based on the previous step, selects genes that are taxonomically restricted (TRG)
   
-* **C :** selects TRG with homology in non-coding regions of neighbor genomes. If a phylogenetic tree was provided, DENSE can require from these genomes to be 'outgroup', meaning that there are more distant from the focal genome that any neighbor actually sharing the gene.
+* **C :** selects TRG with homology in non-coding regions of neighbor genomes. If a phylogenetic tree was provided, DENSE can require from these genomes to be 'outgroup', meaning that they are more distant from the focal genome that any neighbor actually sharing the gene.
   
 * **D :** DENSE finally determines whether the homologous non-coding regions are in synteny with their TRG (the step can be switch off).  
 It generates a file containing all the genes that have emerged *de novo*.
@@ -158,7 +158,6 @@ params {
     synteny  = false                      // turn off synteny checking 
     
 }
-
 ```
 > Find out more ways to use options in Nextflow : [configs](https://www.nextflow.io/docs/latest/config.html)
 
