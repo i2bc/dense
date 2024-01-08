@@ -41,7 +41,7 @@
                 "strategy": {
                     "type": "integer",
                     "default": 1,
-                    "description": "The strategy number to apply : 1->TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match ; 2->TRG has a non-coding match in a genome without any CDS match ; 3->TRG is orphan",
+                    "description": "The strategy number to apply to detect denovo genes :  1-> has a non-coding hit 'outgroup' (see https://github.com/Proginski/dense/tree/master#outgroup) i.e. has a non-coding hit in a genome without any CDS hit AND that genome has an older MRCA than any genome with a CDS hit ;  2-> has a non-coding hit, i.e. TRG has a non-coding hit in a genome without any CDS hit ;  3-> has no (but self) coding hit and has a non-coding hit",
                     "minimum": 1,
                     "maximum": 3
                 }
@@ -181,7 +181,7 @@
                 "synteny": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters."
+                    "description": "Whether or not the check is TRGs are in synteny with their non-coding homolog(s). Required by the following parameters."
                 },
                 "synteny_window": {
                     "type": "integer",

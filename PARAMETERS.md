@@ -12,7 +12,7 @@ Define where the pipeline should find input data and save output data.
 | Parameter | Description | Default |
 | --- | --- | --- |
 | focal | The name of the focal genome (the one whose CDS will be tested). |  |
-| strategy | The strategy number to apply : 1->TRG has a non-coding match in a genome without any CDS match AND that genome has an older MRCA than any genome with a CDS match ; 2->TRG has a non-coding match in a genome without any CDS match ; 3->TRG is orphan | 1 |
+| strategy | The strategy number to apply to detect denovo genes :  1-> has a non-coding hit 'outgroup' (see https://github.com/Proginski/dense/tree/master#outgroup) i.e. has a non-coding hit in a genome without any CDS hit AND that genome has an older MRCA than any genome with a CDS hit ;  2-> has a non-coding hit, i.e. TRG has a non-coding hit in a genome without any CDS hit ;  3-> has no (but self) coding hit and has a non-coding hit | 1 |
 
 ## Other important parameters
 
@@ -58,7 +58,7 @@ Set the top limit for requested resources for any single job.
 
 | Parameter | Description | Default |
 | --- | --- | --- |
-| synteny | Whether or not the check is TRGs are in synteny with their non-coding homolog(s) (require an appropriate '--strategy'). Required by the following parameters. | True |
+| synteny | Whether or not the check is TRGs are in synteny with their non-coding homolog(s). Required by the following parameters. | True |
 | synteny_window | The number of flanking genes to collect on each side (5' and 3') of the TRG and on each side of its non-coding hit. | 4 |
 | synteny_anchors | The minimum number of genes on each side of the TRG that should have their ortholog on one side of its non-coding hit. E.g. : out of 4 flanking genes (set with synteny_window), 3 upstream genes have their ortholog among the flanking genes of the non-coding hit, and 2 for downtream genes. The synteny will be assumed if synteny_anchors is set to 1 or 2, but not 3 or more, because there are only 2 'anchors' on the downstream side of the query. | 1 |
 | orthodir | A directory with the precomputed pairs of orthologous genes for each focal-neighbor genomes pair. One file per genomes pair, must be named '${focal}_${neighbor}_orthologs.tsv'. Incompatible with the following parameters. |  |
