@@ -89,7 +89,8 @@ To download and properly install the NR along with taxonomic data, you can follo
 > [!WARNING]
 > Do not install the nr database in the root directory of your device (i.e. "/nr.dmnd").
 
->The downloading step can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.  
+> [!NOTE]
+> The downloading step can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.  
 >You can ignore this step if you want to use you own user-defined TRG list instead (see Usage).
 
 # Input files
