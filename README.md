@@ -32,7 +32,7 @@ More precisely, the pipeline includes the following steps :
 
 **Flexibility** : DENSE allows to use different "strategies" (combinations of filters) to detect _de novo_ genes :
 
-- 1 : any TRG with a outgroup (see below) non-coding hit
+- 1 : any TRG with a outgroup (see [below](#outgroup)) non-coding hit
 - 2 : any TRG with a non-coding hit
 - 3 : any orphan gene with a non-coding hit
 
@@ -99,6 +99,12 @@ You can now test **DENSE** on the example data with the following command :
 nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
 ```
 
+For example, if you have Docker installed on your machine, your command could be :
+
+```bash
+nextflow run proginski/dense -profile docker,test
+```
+
 ## 3. Download the NR (not mandatory)
 
 In order to detect taxonomically restricted genes (TRGs), DENSE uses [GenEra](https://github.com/josuebarrera/GenEra) to search the Refseq Non-redundant protein database (NR).
@@ -110,7 +116,7 @@ To download and properly install the NR along with taxonomic data, you can follo
 
 > [!NOTE]
 > The downloading step can take a couple of hours, but is necessary to assess the absence of homology of your genes candidate to any other known protein coding gene.  
-> You can ignore this step if you want to use you own user-defined TRG list instead (see Usage).
+> You can ignore this step if you want to use you own user-defined TRG list instead (see [Usage](#usage)).
 
 # Input files
 
@@ -123,20 +129,36 @@ If you want to use DENSE the most complete way, you also need :
 - The phylogenetic tree that shows relations between the genomes (Newick format) `--tree`
 - A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors) `--taxids`
 
+## --taxids
+
+> [!TIP]
 > Get the taxid of your species:
 >
 > - GFF3 files from NCBI have a header line.
 >   ##species https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi?id=\<TAXID\>
 > - Find your organism on the [NCBI Taxonomy browser](https://www.ncbi.nlm.nih.gov/Taxonomy/Browser/wwwtax.cgi).
->
-> Then you can write a file similar to this one :
->
-> ```
-> Droso_melanogaster  7227
-> Droso_virilis   7244
-> Droso_simulans  7240
-> ...
-> ```
+
+Here is a example of a `--taxids` TSV file :
+
+```
+Droso_melanogaster  7227
+Droso_virilis   7244
+Droso_simulans  7240
+...
+```
+
+## --trgs
+
+Here is a example of a `--trgs` file :
+
+```
+rna-NM_181684.3
+rna-XM_047421177.1
+rna-XM_047438033.1
+rna-XM_047438039.1
+rna-NM_001012416.1
+...
+```
 
 # Usage
 
@@ -163,7 +185,7 @@ params {
 
     tree      = "/PATH/tree.nwk"   // a tree with the same names as the genome files
     genera_db = "/PATH/nr/"        // the path to your 'nr.dmd' parent directory
-    taxids    = "/PATH/taxids.tsv" // see the Input files section
+    taxids    = "/PATH/taxids.tsv" // see the [Input files section](#taxids)
 
 }
 ```
@@ -185,14 +207,14 @@ params {
     focal     = "name_of_the_focal_genome"
 
     tree      = "/PATH/tree.nwk"   // a tree with the same names as the genome files
-    trgs      = "/PATH/trgs.txt"   // a single column file with CDS IDs (from GFF3). Their parent genes are assumed to be taxonomically restricted. See the Input files section
+    trgs      = "/PATH/trgs.txt"   // a single column file with CDS IDs (from GFF3). Their parent genes are assumed to be taxonomically restricted. See the [Input files section](#trgs)
 
 }
 ```
 
 > [!NOTE]
-> DENSE runs a tBLASTn of all TRG translated CDS against the neighbor genomes. In certain big genome, a few queries can have several millions of hits which can lower the analysis.
-> e.g. with 16 cpus per taks (neighbor), the mouse genome tBLASTn finishes in about 30 hours, the yeast (S. cer) in a few minutes, an the human in about 10 days.
+> DENSE runs a tBLASTn of all TRG translated CDS against the neighbor genomes. For certain big genomes, a few queries can have several millions of hits (e.g. repeated elements) which can slow down the analysis.  
+> e.g. with 16 cpus per taks (neighbor), the human (GRCh38.p14) tBLASTn finishes in about 10 days, whereas the mouse genome takes about 30 hours and the yeast (S. cer) only a few minutes.
 
 ## Lucy example
 
@@ -218,7 +240,7 @@ params {
 
     tree      = "family_tree.nwk" // a tree with the same names as the genome files
     genera_db = "../../../nr/"    // the path to the 'nr.dmd' parent directory
-    taxids    = "taxids.tsv"      // see the Input files section
+    taxids    = "taxids.tsv"      // see the [Input files section](#taxids)
 
 }
 ```
@@ -248,7 +270,7 @@ params {
     gendir   = "input_file/"              // a directory that contains strain1.fna, strain1.gff3, strain2.fna, strain2.gff3, etc...
     focal    = "strain1"                  // the name of the focal genome
 
-    trgs     = "list_of_orphan_genes.txt" // see the Input files section
+    trgs     = "list_of_orphan_genes.txt" // see the [Input files section](#trgs)
     strategy = 2                          // select any TRG with a non-coding homolog region (and no coding homolog) of a neighbor.
     synteny  = false                      // turn off synteny checking
 
