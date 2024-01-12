@@ -188,7 +188,7 @@ params {
 
     tree      = "/PATH/tree.nwk"   // a tree with the same names as the genome files
     genera_db = "/PATH/nr/"        // the path to your 'nr.dmd' parent directory
-    taxids    = "/PATH/taxids.tsv" // see the [Input files section](#taxids)
+    taxids    = "/PATH/taxids.tsv" // see the Input files section
 
 }
 ```
@@ -210,7 +210,7 @@ params {
     focal     = "name_of_the_focal_genome"
 
     tree      = "/PATH/tree.nwk"   // a tree with the same names as the genome files
-    trgs      = "/PATH/trgs.txt"   // a single column file with CDS IDs (from GFF3). Their parent genes are assumed to be taxonomically restricted. See the [Input files section](#trgs)
+    trgs      = "/PATH/trgs.txt"   // a single column file with CDS IDs (from GFF3). Their parent genes are assumed to be taxonomically restricted. See the Input files section
 
 }
 ```
@@ -243,7 +243,7 @@ params {
 
     tree      = "family_tree.nwk" // a tree with the same names as the genome files
     genera_db = "../../../nr/"    // the path to the 'nr.dmd' parent directory
-    taxids    = "taxids.tsv"      // see the [Input files section](#taxids)
+    taxids    = "taxids.tsv"      // see the Input files section
 
 }
 ```
@@ -273,7 +273,7 @@ params {
     gendir   = "input_file/"              // a directory that contains strain1.fna, strain1.gff3, strain2.fna, strain2.gff3, etc...
     focal    = "strain1"                  // the name of the focal genome
 
-    trgs     = "list_of_orphan_genes.txt" // see the [Input files section](#trgs)
+    trgs     = "list_of_orphan_genes.txt" // see the Input files section
     strategy = 2                          // select any TRG with a non-coding homolog region (and no coding homolog) of a neighbor.
     synteny  = false                      // turn off synteny checking
 
