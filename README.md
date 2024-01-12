@@ -105,6 +105,9 @@ For example, if you have Docker installed on your machine, your command could be
 nextflow run proginski/dense -profile docker,test
 ```
 
+> [!NOTE]
+> The very first time you run DENSE, Nextflow will download the repository along with the appropriate container images from DockerHub. It takes about a minute and do not need do be repeated.
+
 ## 3. Download the NR (not mandatory)
 
 In order to detect taxonomically restricted genes (TRGs), DENSE uses [GenEra](https://github.com/josuebarrera/GenEra) to search the Refseq Non-redundant protein database (NR).
