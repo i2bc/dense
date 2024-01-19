@@ -5,10 +5,6 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
-**WARNING : THIS REPOSITORY IS under CONSTRUCTION**
-** BOTH DOCUMENTATION AND SCRIPTS ARE NOT COMPLETED OR UP TO DATE**
-** PLEASE WAIT FOR A FIRST RELEASE | EARLY 2024 **
-
 # Introduction
 
 **DENSE** is a pipeline that detects genes that have emerged _de novo_ (from non-coding DNA regions), based on phylostratigraphy and synteny.
