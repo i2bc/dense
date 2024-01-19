@@ -163,6 +163,11 @@ rna-NM_001012416.1
 ...
 ```
 
+## GFF3 files
+
+The GFF3 annotation files must be compliant with the [gff3 specifications](https://github.com/The-Sequence-Ontology/Specifications/blob/master/gff3.md).
+In addition, they must have 'CDS' features with 'mRNA' parents, and these 'mRNA' features must have 'gene' features as 'Parent'.
+
 # Usage
 
 ## Quick start

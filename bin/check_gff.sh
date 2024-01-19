@@ -14,6 +14,7 @@ END {
 	if( valid ) { print "valid format" }
 	else {
 		print "ERROR - invalid format :"
+		print FILENAME >> "gff_to_correct.txt"
 		if (!(has_CDS)) { print "The GFF file must have \"CDS\" features with a \"Parent\" attribute (9th column)." }
 		if (!(has_mRNA)){ print "The GFF file must have \"mRNA\" features with both \"ID\" and \"Parent\" attributes (9th column)." }
 		if (!(has_gene)){ print "The GFF file must have \"gene\" features with an \"ID\" attribute (9th column)." }

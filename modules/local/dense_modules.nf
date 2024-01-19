@@ -60,8 +60,27 @@ process CHECK_INPUTS {
 	cat valid_genomes.txt | while read genome
 	do
 		gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
-		check_gff.sh \$gff >> gff_checking.txt
+		check_gff.sh \$gff >> first_gff_checking.txt
 	done
+	# If the file gff_to_correct.txt is not empty, correct the GFF files.
+	if [ -s gff_to_correct.txt ]
+	then
+		echo "WARNING : some GFF files are not formated as expected."
+		echo "Trying to correct them..."
+		mv $gendir ${gendir}_INIT
+		cp -rL ${gendir}_INIT $gendir
+		cat gff_to_correct.txt | while read gff
+		do
+			better_mRNA.py -i \$gff -o \$gff
+		done
+		echo "Done."
+
+		cat valid_genomes.txt | while read genome
+		do
+			gff=$gendir/\$( ls $gendir | grep \$genome | grep "\\.gff\$\\|\\.gff3\$" )
+			check_gff.sh \$gff >> gff_checking.txt
+		done
+	fi
 	# If one or several GFF files are not correct :
 	if grep -q ERROR gff_checking.txt
 	then
