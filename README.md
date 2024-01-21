@@ -92,13 +92,13 @@ You can use any of the following :
 You can now test **DENSE** on the example data with the following command :
 
 ```bash
-nextflow run dense/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
+nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
 ```
 
 For example, if you have Docker installed on your machine, your command could be :
 
 ```bash
-nextflow run dense/dense -profile docker,test
+nextflow run i2bc/dense -profile docker,test
 ```
 
 > [!NOTE]
@@ -176,7 +176,7 @@ In addition, they must have 'CDS' features with 'mRNA' parents, and these 'mRNA'
 #### command
 
 ```
-nextflow run dense/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
+nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
 ```
 
 #### config file
@@ -199,7 +199,7 @@ params {
 #### command
 
 ```
-nextflow run dense/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
+nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
 ```
 
 #### config file
@@ -229,7 +229,7 @@ Since her HPC's admin does not like Docker (they _all_ do), she uses [Apptainer]
 ### command
 
 ```
-nextflow run dense/dense -profile apptainer -c Lucy.config
+nextflow run i2bc/dense -profile apptainer -c Lucy.config
 ```
 
 ### config file
@@ -261,7 +261,7 @@ He changed his mind about this options in the middle of a first analysis, so thi
 ### command
 
 ```
-nextflow run dense/dense -profile docker -c Luca.config -resume
+nextflow run i2bc/dense -profile docker -c Luca.config -resume
 ```
 
 ### config file
