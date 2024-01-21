@@ -43,13 +43,23 @@ More precisely, the pipeline includes the following steps :
   - [2. Container manager](#2-container-manager)
   - [3. Download the NR (not mandatory)](#3-download-the-nr-not-mandatory)
 - [Input files](#input-files)
+  - [--taxids](#--taxids)
+  - [--trgs](#--trgs)
+  - [GFF3 files](#gff3-files)
 - [Usage](#usage)
+  - [Quick start](#quick-start)
+    - [Full pipeline (steps A,B,C,D) with phylostratigraphy](#full-pipeline-steps-abcd-with-phylostratigraphy)
+      - [command](#command)
+      - [config file](#config-file)
+    - [Short pipeline (steps C,D) without phylostratigraphy](#short-pipeline-steps-cd-without-phylostratigraphy)
+      - [command](#command-1)
+      - [config file](#config-file-1)
   - [Lucy example](#lucy-example)
-    - [command](#command)
-    - [config file](#config-file)
+    - [command](#command-2)
+    - [config file](#config-file-2)
   - [Luca example](#luca-example)
-    - [command](#command-1)
-    - [config file](#config-file-1)
+    - [command](#command-3)
+    - [config file](#config-file-3)
 - [Options](#options)
 - [Pipeline output](#pipeline-output)
 - [Credits](#credits)
@@ -92,17 +102,25 @@ You can use any of the following :
 You can now test **DENSE** on the example data with the following command :
 
 ```bash
-nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
+nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
 ```
 
 For example, if you have Docker installed on your machine, your command could be :
 
 ```bash
-nextflow run i2bc/dense -profile docker,test
+nextflow run proginski/dense -profile docker,test
 ```
 
 > [!NOTE]
 > The very first time you run DENSE, Nextflow will download the repository along with the appropriate container images from DockerHub. It takes about a minute and do not need do be repeated.
+
+> [!WARNING]
+> Docker users may encounter the following error : 
+> ```
+> docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.
+> See 'docker run --help'.
+> ```
+> In that case, restart Docker desktop (if appropriate) or follow this [fix](https://stackoverflow.com/questions/71815092/docker-cannot-connect-to-the-docker-daemon-at-unix-var-run-docker-sock-is-th).
 
 ## 3. Download the NR (not mandatory)
 
@@ -176,7 +194,7 @@ In addition, they must have 'CDS' features with 'mRNA' parents, and these 'mRNA'
 #### command
 
 ```
-nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
+nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
 ```
 
 #### config file
@@ -199,7 +217,7 @@ params {
 #### command
 
 ```
-nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
+nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
 ```
 
 #### config file
@@ -229,7 +247,7 @@ Since her HPC's admin does not like Docker (they _all_ do), she uses [Apptainer]
 ### command
 
 ```
-nextflow run i2bc/dense -profile apptainer -c Lucy.config
+nextflow run proginski/dense -profile apptainer -c Lucy.config
 ```
 
 ### config file
@@ -261,7 +279,7 @@ He changed his mind about this options in the middle of a first analysis, so thi
 ### command
 
 ```
-nextflow run i2bc/dense -profile docker -c Luca.config -resume
+nextflow run proginski/dense -profile docker -c Luca.config -resume
 ```
 
 ### config file
