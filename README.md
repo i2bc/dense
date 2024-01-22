@@ -10,9 +10,9 @@
 **DENSE** is a pipeline that detects genes that have emerged _de novo_ (from non-coding DNA regions), based on phylostratigraphy and synteny.
 
 <div style="background-color: #fff;">
-    <img src="docs/images/Fig1.png#gh-dark-mode-only" alt="Figure 1 from Roginski et al">
+    <img src="docs/images/Fig1.png" alt="Figure 1 from Roginski et al">
 </div>
-<small>from _Roginski et al_ (submitted)</small>
+<small>from *Roginski et al* (submitted)</small>
 
 **DENSE** uses a genome of interest (focal) and its phylogenetic neighbors (genomes FASTA and GFF3 annotation files).
 
