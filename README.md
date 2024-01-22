@@ -66,6 +66,13 @@ More precisely, the pipeline includes the following steps :
 - [Citations](#citations)
 <!--te-->
 
+# Key concepts
+
+## Outgroup
+
+A genome labelled as "outgroup" is a genome where a given gene is absent and which branch in the tree _after_ the last genome where the gene is present.
+![outgroup illustration](docs/images/outgroup.png)
+
 # Set-up
 
 ## 1. Nextflow
@@ -115,11 +122,13 @@ nextflow run proginski/dense -profile docker,test
 > The very first time you run DENSE, Nextflow will download the repository along with the appropriate container images from DockerHub. It takes about a minute and do not need do be repeated.
 
 > [!WARNING]
-> Docker users may encounter the following error : 
+> Docker users may encounter the following error :
+>
 > ```
 > docker: Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?.
 > See 'docker run --help'.
 > ```
+>
 > In that case, restart Docker desktop (if appropriate) or follow this [fix](https://stackoverflow.com/questions/71815092/docker-cannot-connect-to-the-docker-daemon-at-unix-var-run-docker-sock-is-th).
 
 ## 3. Download the NR (not mandatory)
