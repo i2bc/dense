@@ -70,8 +70,8 @@ More precisely, the pipeline includes the following steps :
 
 ## Outgroup
 
-A genome labelled as "outgroup" is a genome where a given gene is absent and which branch in the tree _after_ the last genome where the gene is present.
-![outgroup illustration](docs/images/outgroup.png)
+A genome labelled as "outgroup" is a genome where a given gene is absent and which branch in the tree **after** the last genome where the gene is present.  
+<img src="docs/images/outgroup.png" width="15%">
 
 # Set-up
 
