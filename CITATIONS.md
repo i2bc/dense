@@ -8,15 +8,15 @@
 
 - [AWK](https://collaborate.princeton.edu/en/publications/awk-a-pattern-scanning-and-processing-language)
 
-  > Aho, A. V., Kernighan, B. W., & Weinberger, P. J. (1979). Awk — a pattern scanning and processing language. Software: Practice and Experience, 9(4), 267-279. https://doi.org/10.1002/spe.4380090403
+  > Aho, A. V., Kernighan, B. W., & Weinberger, P. J. (1979). Awk — a pattern scanning and processing language. Software: Practice and Experience, 9(4), 267-279.
 
 - [BEDTools](https://academic.oup.com/bioinformatics/article/26/6/841/244688)
 
-  > Aaron R. Quinlan, Ira M. Hall, BEDTools: a flexible suite of utilities for comparing genomic features, Bioinformatics, Volume 26, Issue 6, March 2010, Pages 841–842, https://doi.org/10.1093/bioinformatics/btq033
+  > Aaron R. Quinlan, Ira M. Hall, BEDTools: a flexible suite of utilities for comparing genomic features, Bioinformatics, Volume 26, Issue 6, March 2010, Pages 841–842
 
 - [GffRead](https://f1000research.com/articles/9-304/v2)
 
-  > Pertea G and Pertea M. GFF Utilities: GffRead and GffCompare [version 2; peer review: 3 approved]. F1000Research 2020, 9:304 (https://doi.org/10.12688/f1000research.23297.2)
+  > Pertea G and Pertea M. GFF Utilities: GffRead and GffCompare [version 2; peer review: 3 approved]. F1000Research 2020, 9:304
 
 - [GenEra](https://doi.org/10.1186/s13059-023-02895-z)
 
