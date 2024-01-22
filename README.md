@@ -9,7 +9,10 @@
 
 **DENSE** is a pipeline that detects genes that have emerged _de novo_ (from non-coding DNA regions), based on phylostratigraphy and synteny.
 
-![dag.png](docs/images/flowchart_vs6.png)
+<div style="background-color: #fff;">
+    <img src="docs/images/Fig1.png#gh-dark-mode-only" alt="Figure 1 from Roginski et al">
+</div>
+<small>from _Roginski et al_ (submitted)</small>
 
 **DENSE** uses a genome of interest (focal) and its phylogenetic neighbors (genomes FASTA and GFF3 annotation files).
 
@@ -73,7 +76,8 @@ More precisely, the pipeline includes the following steps :
 ## Outgroup
 
 A genome labelled as "outgroup" is a genome where a given gene is absent and which branch in the tree **after** the last genome where the gene is present.  
-<img src="docs/images/outgroup.png" width="40%">
+<img src="docs/images/outgroup.png" width="40%" alt="outgroup illustration">  
+<small>from _Roginski et al_ (submitted)</small>
 
 # Set-up
 
