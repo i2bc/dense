@@ -38,6 +38,8 @@ More precisely, the pipeline includes the following steps :
 
 - [Introduction](#introduction)
 - [Table of contents](#table-of-contents)
+- [Key concepts](#key-concepts)
+  - [outgroup](#outgroup)
 - [Set-up](#set-up)
   - [1. Nextflow](#1-nextflow)
   - [2. Container manager](#2-container-manager)
