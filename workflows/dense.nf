@@ -24,7 +24,7 @@ include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } fr
 
 // Print help message, supply typical command line usage for the pipeline
 if (params.help) {
-   log.info paramsHelp("nextflow run denovogenes.nf --gendir <DIR WITH GFF AND FASTA> --focal <FOCAL_GENOME_NAME> --tree <NEWICK WITH FOCAL AND NEIGHBORS> --outdir <OUTDIR>")
+   log.info paramsHelp("nextflow run proginski/dense --gendir <DIR WITH GFF AND FASTA> --focal <FOCAL_GENOME_NAME> --tree <NEWICK WITH FOCAL AND NEIGHBORS> --outdir <OUTDIR>")
    exit 0
 }
 
