@@ -213,6 +213,8 @@ process GENERA {
 		path "${focal_taxid}_gene_ages.tsv"
 		
 	"""
+	database=\$(echo $db | sed "s/.dmnd\$//")
+
 	# -t taxID
 	# -q query fasta
 	# -n number of CPU to use
@@ -224,7 +226,47 @@ process GENERA {
 	-q $focal_CDS \
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
-	-b $db/nr \
+	-b \${database} \
+	-d $taxdump
+	"""
+}
+
+
+process GENERA_FAST {
+
+	label 'parallel_job'
+
+	tag 'phylostratigraphy'
+
+	publishDir "${params.outdir}/genera_results"
+
+	cpus params.max_cpus
+
+	input:
+		val focal_taxid
+		path focal_CDS
+		path neighbors_CDS
+		path db
+		path taxdump
+		
+	output:
+		path "${focal_taxid}_gene_ages.tsv"
+		
+	"""
+	database=\$(echo $db | sed "s/.dmnd\$//")
+
+	# -t taxID
+	# -q query fasta
+	# -n number of CPU to use
+	# -b path to the nr database
+	# -r OR, the first time you use genEra : -d /path/to/taxdump/ \
+	# -x Temp dir (potentially hundreds of Go needed).
+	genEra \
+	-t $focal_taxid \
+	-q $focal_CDS \
+	-a $neighbors_CDS \
+	-n ${task.cpus} \
+	-b \${database} \
 	-d $taxdump
 	"""
 }

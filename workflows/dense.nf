@@ -157,6 +157,7 @@ include { CHECK_INPUTS                  } from '../modules/local/dense_modules.n
 include { MRNA_TO_GENE                  } from '../modules/local/orthologs_modules.nf'
 include { EXTRACT_CDS                   } from '../modules/local/dense_modules.nf'
 include { TAXDUMP                       } from '../modules/local/dense_modules.nf'
+include { GENERA_FAST                   } from '../modules/local/dense_modules.nf'
 include { GENERA                        } from '../modules/local/dense_modules.nf'
 include { GENERA_FILTER                 } from '../modules/local/dense_modules.nf'
 include { FIND_TRG                      } from '../modules/local/dense_modules.nf'
@@ -293,7 +294,8 @@ workflow DENSE {
 							.map { name, CDS, taxid -> "${CDS}\t${taxid}" }
 							.collectFile(name: 'neighbor_CDS_taxids.txt', newLine: true)
 
-				GENERA(
+				if ( params.genera_fast ) {
+					GENERA_FAST(
 						focal_taxid,
 						focal_ch
 						.map{ focal_name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_faa },
@@ -301,7 +303,18 @@ workflow DENSE {
 						file(params.genera_db),
 						TAXDUMP.out
 					  )
-				genera_out_ch = GENERA.out
+					genera_out_ch = GENERA_FAST.out
+				} else {
+					GENERA(
+							focal_taxid,
+							focal_ch
+							.map{ focal_name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_faa },
+							neighbor_CDS_taxids, 
+							file(params.genera_db),
+							TAXDUMP.out
+						)
+					genera_out_ch = GENERA.out
+				}
 			}
 
 			GENERA_FILTER(

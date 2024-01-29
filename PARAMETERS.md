@@ -47,7 +47,8 @@ Set the top limit for requested resources for any single job.
 | trgsblastdir | A directory with the (precomputed) BLAST output necessary for TRG homologs detection. Two files per neighbor genome, must be named 'TRG_multielongated_blastp_${neighbor}_CDS_elongated.out' and 'TRG_multielongated_tblastn_${neighbor}_genome.out'. Incompatible with the following parameters. |  |
 | trgs | A text file with a predefined list of CDS to consider as TRGs (incompatible with the following parameters). |  |
 | genera_out | A '.tsv' file with precomputed gene ages from genEra. Makes '--genera_db' useless. |  |
-| genera_db | The directory that contains : nr.dmd. Necessary if a list of TRGs is not provided ('--TRGs'). |  |
+| genera_db | Path to the diamond db with taxonomy (e.g. '../DBs/nr.dmnd'). Necessary if a list of TRGs is not provided ('--TRGs'). |  |
+| genera_fast | Use a custom version of GenEra to deal with large genomes. Warning : may open as many files as the number of CDSs. |  |
 | taxdump | The taxdump directory path (otherwise downloaded). |  |
 | taxids | A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors). |  |
 | trg_node | A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank'). |  |
