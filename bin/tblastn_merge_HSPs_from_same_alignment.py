@@ -24,6 +24,7 @@ args = parser.parse_args()
 
 # Get the column names
 with open(args.inputfile, 'r') as inp:
+        colnames = None
         for line in inp:
              if line.startswith('# Fields: '):
                  header = line.strip()[len('# Fields: '):]
@@ -36,56 +37,63 @@ def sign(num):
 # Open the input and the output files
 with open(args.inputfile, 'r') as inp, (open(args.outputfile, 'w') if args.outputfile else sys.stdout) as out:
 
-    previous_line = (". " * len(colnames)).split()
-    previous_line = dict(zip(colnames, previous_line))
+    if colnames is None: # If there is no hit at all in the file.
+        print(f"No hit found in {args.inputfile}. The output file will be empty.")
+        # Write a 0 octet file
+        out.write('')
+    else :
 
-    for line in inp:
-        if line.startswith('#'):
-            out.write(line)
-        else:
-            
-            line = line.strip().split('\t')
-            line = dict(zip(colnames, line))
-            line['q. start'] = int(line['q. start'])
-            line['q. end'] = int(line['q. end'])
-            line['s. start'] = int(line['s. start'])
-            line['s. end'] = int(line['s. end'])
-            line['query length'] = int(line['query length'])
+        previous_line = (". " * len(colnames)).split()
+        previous_line = dict(zip(colnames, previous_line))
 
-            # If the query and subject are the same as for the previous HSP (line), and the evalue is non-null and the same as the previous HSP, and with the same strand but with a different bitscore,
-            # then is it assumed that the current HSP belongs to the same alignment as the previous one.
-            if line['query acc.ver'] == previous_line['query acc.ver'] and line['subject acc.ver'] == previous_line['subject acc.ver'] and line['evalue'] != "0" and line['evalue'] == previous_line['evalue'] and sign(line['sbjct frame']) == sign(previous_line['sbjct frame']) and line['bit score'] != previous_line['bit score']:
-                line['% identity'] = "NaN"
-                line['alignment length'] = "NaN"
-                line['mismatches'] = "NaN"
-                line['gap opens'] = "NaN"
-                line['bit score'] = "Nan"
-                line['q. start'] = min(line['q. start'], previous_line['q. start'])
-                line['q. end'] = max(line['q. end'], previous_line['q. end'])
-                line['% query coverage per hsp'] = round(100*(line['q. end'] - line['q. start'] + 1)/line['query length'])
-                                     
-                strand = sign(line['sbjct frame'])
-                # If the strand is positive
-                if strand == 1:
-                    line['sbjct frame'] = 42
-                    line['s. start'] = min(line['s. start'], previous_line['s. start'])
-                    line['s. end'] = max(line['s. end'], previous_line['s. end'])
-                # If the strand is negative
-                elif strand == -1:
-                    line['sbjct frame'] = -42
-                    line['s. start'] = max(line['s. start'], previous_line['s. start'])
-                    line['s. end'] = min(line['s. end'], previous_line['s. end'])
-                else:
-                    raise ValueError(f"Invalid strand: {strand}")
-            # If the current HSP does not belong to the same alignment as the previous one
+        for line in inp:
+            if line.startswith('#'):
+                out.write(line)
             else:
-                if previous_line['query acc.ver'] != '.':
-                    outline = '\t'.join(str(previous_line[colname]) for colname in previous_line)
-                    out.write(f"{outline}\n")
-                    
-            line['subject acc.ver'] = '_'.join( [ line['subject acc.ver'], str(line['s. start']), str(line['s. end']) ] )
-            previous_line = line
+                
+                line = line.strip().split('\t')
+                line = dict(zip(colnames, line))
+                line['q. start'] = int(line['q. start'])
+                line['q. end'] = int(line['q. end'])
+                line['s. start'] = int(line['s. start'])
+                line['s. end'] = int(line['s. end'])
+                line['query length'] = int(line['query length'])
+
+                # If the query and subject are the same as for the previous HSP (line), and the evalue is non-null and the same as the previous HSP, and with the same strand but with a different bitscore,
+                # then is it assumed that the current HSP belongs to the same alignment as the previous one.
+                if line['query acc.ver'] == previous_line['query acc.ver'] and line['subject acc.ver'] == previous_line['subject acc.ver'] and line['evalue'] != "0" and line['evalue'] == previous_line['evalue'] and sign(line['sbjct frame']) == sign(previous_line['sbjct frame']) and line['bit score'] != previous_line['bit score']:
+                    line['% identity'] = "NaN"
+                    line['alignment length'] = "NaN"
+                    line['mismatches'] = "NaN"
+                    line['gap opens'] = "NaN"
+                    line['bit score'] = "Nan"
+                    line['q. start'] = min(line['q. start'], previous_line['q. start'])
+                    line['q. end'] = max(line['q. end'], previous_line['q. end'])
+                    line['% query coverage per hsp'] = round(100*(line['q. end'] - line['q. start'] + 1)/line['query length'])
+                                        
+                    strand = sign(line['sbjct frame'])
+                    # If the strand is positive
+                    if strand == 1:
+                        line['sbjct frame'] = 42
+                        line['s. start'] = min(line['s. start'], previous_line['s. start'])
+                        line['s. end'] = max(line['s. end'], previous_line['s. end'])
+                    # If the strand is negative
+                    elif strand == -1:
+                        line['sbjct frame'] = -42
+                        line['s. start'] = max(line['s. start'], previous_line['s. start'])
+                        line['s. end'] = min(line['s. end'], previous_line['s. end'])
+                    else:
+                        raise ValueError(f"Invalid strand: {strand}")
+                # If the current HSP does not belong to the same alignment as the previous one
+                else:
+                    if previous_line['query acc.ver'] != '.':
+                        outline = '\t'.join(str(previous_line[colname]) for colname in previous_line)
+                        out.write(f"{outline}\n")
+                        
+                line['subject acc.ver'] = '_'.join( [ line['subject acc.ver'], str(line['s. start']), str(line['s. end']) ] )
+                previous_line = line
     
-    # Write the last line
-    outline = '\t'.join(str(previous_line[colname]) for colname in previous_line)
-    out.write(f"{outline}\n")
+    if colnames is not None:
+        # Write the last line
+        outline = '\t'.join(str(previous_line[colname]) for colname in previous_line)
+        out.write(f"{outline}\n")
