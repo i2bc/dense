@@ -1,7 +1,7 @@
 ![DENSE](docs/images/Dense_logo.png)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10534461.svg)](https://doi.org/10.5281/zenodo.10534461)
+[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2024.01.30.578014-B31B1B.svg)](https://doi.org/10.1101/2024.01.30.578014)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
@@ -339,7 +339,7 @@ Simon Herman
 
 # Citations
 
-If you use DENSE for your analysis, please cite it using the following doi: [10.5281/zenodo.10534461](https://doi.org/10.5281/zenodo.10534461)
+If you use DENSE for your analysis, please cite it using the following doi: [https://doi.org/10.1101/2024.01.30.578014 ](https://doi.org/10.1101/2024.01.30.578014)
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
