@@ -4,7 +4,7 @@
 """
 The idea behind this script is to identify alignments made of several HSP due to frameshifts in the subject.
 When BLAST considers two or more HSP to be part of a same alignment, it recomputes a new evalue with sum-statistics.
-all the different HSP of the same allignment thus share the same evalue but keep their own bitscore.
+all the different HSP of the same alignment thus share the same evalue but keep their own bitscore.
 
 The tblastn command has been configured with -outfmt "7 std qlen qcovhsp sframe"
 # Fields: query acc.ver, subject acc.ver, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score, query length, % query coverage per hsp, sbjct frame
@@ -30,6 +30,7 @@ with open(args.inputfile, 'r') as inp:
                  header = line.strip()[len('# Fields: '):]
                  colnames = header.split(', ')
                  break
+        # print(f"Column names: {colnames}")
 
 def sign(num):
     return int(math.copysign(1, int(num)))
@@ -47,13 +48,18 @@ with open(args.inputfile, 'r') as inp, (open(args.outputfile, 'w') if args.outpu
         previous_line = dict(zip(colnames, previous_line))
 
         for line in inp:
+        # for i, line in enumerate(inp):
+        #     print(f"line {i}: {line}")
             if line.startswith('#'):
                 out.write(line)
             else:
-                
+                # print(line)
                 line = line.strip().split('\t')
                 line = dict(zip(colnames, line))
-                line['q. start'] = int(line['q. start'])
+                try:
+                    line['q. start'] = int(line['q. start'])
+                except:
+                    sys.exit(f"Error : non q.start for line: {line}")
                 line['q. end'] = int(line['q. end'])
                 line['s. start'] = int(line['s. start'])
                 line['s. end'] = int(line['s. end'])

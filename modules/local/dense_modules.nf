@@ -126,6 +126,8 @@ process CHECK_INPUTS {
 
 process EXTRACT_CDS {
 
+	publishDir "${params.outdir}/CDS",  pattern: "*_CDS.f*"
+
 	input:
 		tuple val(name), path(fasta), path(gff)
 	output:

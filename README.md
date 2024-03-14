@@ -73,7 +73,7 @@ More precisely, the pipeline includes the following steps :
 
 ## Outgroup
 
-A genome labeled as "outgroup" is a genome where a given gene is absent and which branch in the tree **after** the last genome where the gene is present.  
+A genome labeled as "outgroup" is a genome where a given gene is absent and which branches in the tree **after** the last genome where the gene is present.  
 <img src="docs/images/outgroup.png" width="40%" alt="outgroup illustration">  
 <sub>from _Roginski et al_ (submitted)</sub>
 
@@ -219,7 +219,7 @@ params {
     focal     = "name_of_the_focal_genome"
 
     tree      = "/PATH/tree.nwk"   // a tree with the same names as the genome files
-    genera_db = "/PATH/nr/"        // the path to your 'nr.dmd' parent directory
+    genera_db = "/PATH/nr.dmnd"    // the diamond database
     taxids    = "/PATH/taxids.tsv" // see the Input files section
 
 }
@@ -274,7 +274,7 @@ params {
     focal     = "favorite"       // the name of the focal genome
 
     tree      = "family_tree.nwk" // a tree with the same names as the genome files
-    genera_db = "../../../nr/"    // the path to the 'nr.dmd' parent directory
+    genera_db = "/PATH/nr.dmnd"    // the diamond database
     taxids    = "taxids.tsv"      // see the Input files section
 
 }
