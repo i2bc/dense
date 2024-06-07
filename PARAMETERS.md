@@ -20,6 +20,7 @@ Define where the pipeline should find input data and save output data.
 | Parameter | Description | Default |
 | --- | --- | --- |
 | tree | The phylogenetic tree that shows relations between the genomes (Newick format). E.g. "((Ptep:0.75680000,Pruf:0.75680000)'210':0.38205000,Pfoa:1.13885000)'220';" |  |
+| num_outgroups | The required number of outgroups with a non-coding match for the strategy 1 (see https://github.com/Proginski/dense/tree/master#outgroup) | 1 |
 | help | Throws this page. |  |
 
 ## Institutional config options
@@ -48,7 +49,7 @@ Set the top limit for requested resources for any single job.
 | trgs | A text file with a predefined list of CDS to consider as TRGs (incompatible with the following parameters). |  |
 | genera_out | A '.tsv' file with precomputed gene ages from genEra. Makes '--genera_db' useless. |  |
 | genera_db | Path to the diamond db with taxonomy (e.g. '../DBs/nr.dmnd'). Necessary if a list of TRGs is not provided ('--TRGs'). |  |
-| genera_fast | Use a custom version of GenEra to deal with large genomes. Warning : may open as many files as the number of CDSs. |  |
+| genera_fast | Use a custom version of GenEra to deal with large genomes. Warning : may open as many files as the number of CDSs. | False |
 | taxdump | The taxdump directory path (otherwise downloaded). |  |
 | taxids | A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors). |  |
 | trg_node | A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank'). |  |

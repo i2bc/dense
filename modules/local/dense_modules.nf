@@ -761,6 +761,7 @@ process MATCH_MATRIX_TO_DE_NOVO_GENES {
 		path TRGs_selected_before_strategy
 		val strategy
 		val synteny
+		val num_outgroups
 		
 	output:
 		path "denovogenes.tsv"
@@ -769,6 +770,7 @@ process MATCH_MATRIX_TO_DE_NOVO_GENES {
 	match_matrix_to_de_novo_genes.py $match_matrix $TRGs_selected_before_strategy \
 	--strategy $strategy \
 	--synteny $synteny \
+	--num_outgroups $num_outgroups \
 	--out denovogenes.tsv
 	"""
 }

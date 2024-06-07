@@ -28,6 +28,7 @@ parser.add_argument('match_matrix', type=str, help='The path to the match_matrix
 parser.add_argument('TRG_before_filtering', type=str, help='The path to the TRG_before_filtering tsv file')
 parser.add_argument('--strategy', type=int, choices=[1, 2, 3], default=1, help='The strategy to define de novo genes')
 parser.add_argument('--synteny', type=str, help='Whether or not to require that non-coding matches are in synteny')
+parser.add_argument('--num_outgroups', type=int, help='The required number of outgroups to use for the strategy 1')
 parser.add_argument('-o', '--output', type=str, help='The path to the output tsv file')
 
 # Parse the arguments
@@ -38,17 +39,34 @@ args = parser.parse_args()
 de_novo_CDS = []
 not_de_novo_CDS = []
 
+# The maximum number of outgroups is the number of columns in the match matrix minus 2 (first and second columns)
+with open(args.match_matrix, 'r') as f:
+    reader = csv.reader(f, delimiter='\t')
+    header = next(reader)
+    num_columns = len(header)
+    max_num_outgroups = num_columns - 2
+# Check if the number of outgroups is valid
+if args.num_outgroups > max_num_outgroups or args.num_outgroups <= 0:
+    sys.exit(f"Invalid number of outgroups. The maximum number of outgroups is {max_num_outgroups}")
+
 # Define the pattern based on the strategy and synteny
+def list_of_patterns_with_outgroups(pattern, num_outgroups, max_num_outgroups):
+    """
+    Generate a list of patterns with outgroups
+    Exemple: list_of_patterns_with_outgroups(["gS", "gNS"], 2, 4) -> ["gS2", "gS3", "gNS2", "gNS3", "gS4", "gNS4"]
+    """
+    return [f"{p}{i}" for i in range(num_outgroups, max_num_outgroups+1) for p in pattern]
+
 if args.strategy == 1:
     if args.synteny == "true":
-        pattern = ["gS*"]
+        pattern = list_of_patterns_with_outgroups(["gS"], args.num_outgroups, max_num_outgroups)
     else:
-        pattern = ["gS*", "gNS*","gNA*"]
+        pattern = list_of_patterns_with_outgroups(["gS", "gNS","gNA"], args.num_outgroups, max_num_outgroups)
 elif args.strategy == 2 or args.strategy == 3:
     if args.synteny == "true":
-        pattern = ["gS*", "gS"]
+        pattern = list_of_patterns_with_outgroups(["gS"], args.num_outgroups, max_num_outgroups)+["gS"]
     else:
-        pattern = ["gS*", "gS", "gNS*", "gNS", "gNA*", "gNA"]
+        pattern = list_of_patterns_with_outgroups(["gS", "gNS","gNA"], args.num_outgroups, max_num_outgroups)+["gS","gNS","gNA"]
 
 # Open the match_matrix file
 with open(args.match_matrix, 'r') as f:

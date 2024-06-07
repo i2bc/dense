@@ -137,7 +137,8 @@ if os.stat(args.tree).st_size > 0:
                 else : # 'genome' match
                     suffix=" "
                     if focal_distance[genome] > max_CDS_distance :
-                        suffix="*"
+                        # For matches in an outgroup species, the suffix becomes a digit indicating the rank of the outgroup
+                        suffix=str(focal_distance[genome]-max_CDS_distance)
                     if genome in match_dic[cds]['genome_syntNA']:
                         line.append("gNA"+suffix)
                     elif genome in match_dic[cds]['genome_synt']:

@@ -497,7 +497,8 @@ workflow DENSE {
 								  TRG_TABLE_TO_MATCH_MATRIX.out,
 								  TRG_LIST_BEFORE_STRATEGY.out,
 								  params.strategy,
-								  params.synteny
+								  params.synteny,
+								  params.num_outgroups
 								 )
 }
 

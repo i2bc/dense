@@ -56,6 +56,13 @@
           "description": "The phylogenetic tree that shows relations between the genomes (Newick format). E.g. \"((Ptep:0.75680000,Pruf:0.75680000)'210':0.38205000,Pfoa:1.13885000)'220';\"",
           "format": "file-path"
         },
+        "num_outgroups": {
+          "type": "integer",
+          "default": 1,
+          "description": "The required number of outgroups with a non-coding match for the strategy 1 (see https://github.com/Proginski/dense/tree/master#outgroup)",
+          "minimum": 1,
+          "maximum": 100
+        },
         "help": {
           "type": "boolean",
           "description": "Throws this page."
