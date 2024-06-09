@@ -131,6 +131,8 @@ if os.stat(args.tree).st_size > 0:
             # Genome matches that are farther than this distance are "outgroup" matches
             max_CDS_distance = max(focal_distance[genome] for genome in sorted_genomes if genome in match_dic[cds]['CDS'])
             # Write the line
+            outgroup_nb = 0
+            last_outgroup_distance = 0
             for genome in sorted_genomes :
                 if genome in match_dic[cds]['CDS']:
                     line.append("CDS")

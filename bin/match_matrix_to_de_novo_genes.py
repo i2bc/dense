@@ -28,7 +28,7 @@ parser.add_argument('match_matrix', type=str, help='The path to the match_matrix
 parser.add_argument('TRG_before_filtering', type=str, help='The path to the TRG_before_filtering tsv file')
 parser.add_argument('--strategy', type=int, choices=[1, 2, 3], default=1, help='The strategy to define de novo genes')
 parser.add_argument('--synteny', type=str, help='Whether or not to require that non-coding matches are in synteny')
-parser.add_argument('--num_outgroups', type=int, help='The required number of outgroups to use for the strategy 1')
+parser.add_argument('--num_outgroups', type=int, help='The required number of outgroups with a non-coding match for the strategies 1 and 3')
 parser.add_argument('-o', '--output', type=str, help='The path to the output tsv file')
 
 # Parse the arguments
@@ -49,25 +49,6 @@ with open(args.match_matrix, 'r') as f:
 if args.num_outgroups > max_num_outgroups or args.num_outgroups <= 0:
     sys.exit(f"Invalid number of outgroups. The maximum number of outgroups is {max_num_outgroups}")
 
-# Define the pattern based on the strategy and synteny
-def list_of_patterns_with_outgroups(pattern, num_outgroups, max_num_outgroups):
-    """
-    Generate a list of patterns with outgroups
-    Exemple: list_of_patterns_with_outgroups(["gS", "gNS"], 2, 4) -> ["gS2", "gS3", "gNS2", "gNS3", "gS4", "gNS4"]
-    """
-    return [f"{p}{i}" for i in range(num_outgroups, max_num_outgroups+1) for p in pattern]
-
-if args.strategy == 1:
-    if args.synteny == "true":
-        pattern = list_of_patterns_with_outgroups(["gS"], args.num_outgroups, max_num_outgroups)
-    else:
-        pattern = list_of_patterns_with_outgroups(["gS", "gNS","gNA"], args.num_outgroups, max_num_outgroups)
-elif args.strategy == 2 or args.strategy == 3:
-    if args.synteny == "true":
-        pattern = list_of_patterns_with_outgroups(["gS"], args.num_outgroups, max_num_outgroups)+["gS"]
-    else:
-        pattern = list_of_patterns_with_outgroups(["gS", "gNS","gNA"], args.num_outgroups, max_num_outgroups)+["gS","gNS","gNA"]
-
 # Open the match_matrix file
 with open(args.match_matrix, 'r') as f:
     reader = csv.reader(f, delimiter='\t')
@@ -80,14 +61,41 @@ with open(args.match_matrix, 'r') as f:
             line[0] = line[0].replace("_elongated", "")
 
         isDeNovo = False
-        # Check if the line contains any string in the pattern starting from the second column
-        if any(any(p in column for p in pattern) for column in line[1:]):
-            if args.strategy == 1 or args.strategy == 2:
-                isDeNovo = True
-            elif args.strategy == 3:
-                # Check if the second column is "CDS" and "CDS" is not in any other column
-                if line[1] == "CDS" and not any("CDS" in column for column in line[2:]):
+        if args.strategy == 1 : # Must have at least n outgroups with a non-coding match
+            line_num_outgroup_synteny = len(set(column for column in line[2:] if column.startswith("gS") and column[2:].isdigit()))
+
+            if args.synteny == "true":
+                # If their is n different values of pattern "gS[0-9]" in the line (starting from the third column)
+                if line_num_outgroup_synteny >= args.num_outgroups:
                     isDeNovo = True
+            else:
+                # starts.with("gN") can be either "gNS" or "gNA"
+                line_num_outgroup_non_synteny = len(set(column for column in line[2:] if column.startswith("gN") and column[3:].isdigit()))
+                if line_num_outgroup_synteny + line_num_outgroup_non_synteny >= args.num_outgroups:
+                    isDeNovo = True
+
+        elif args.strategy == 2 :
+            if args.synteny == "true":
+                if any(column.startswith("gS") for column in line[2:]):
+                    isDeNovo = True
+            else:
+                if any(column.startswith("gS") or column.startswith("gN") for column in line[2:]):
+                    isDeNovo = True
+
+        elif args.strategy == 3 :
+            if line[1] == "CDS" and not any("CDS" in column for column in line[2:]): # Check that their is one single CDS match (query)
+                # Then same as strategy 1
+                line_num_outgroup_synteny = len(set(column for column in line[2:] if column.startswith("gS") and column[2:].isdigit()))
+            
+                if args.synteny == "true":
+                    # If their is n different values of pattern "gS[0-9]" in the line (starting from the third column)
+                    if line_num_outgroup_synteny >= args.num_outgroups:
+                        isDeNovo = True
+                else:
+                    # starts.with("gN") can be either "gNS" or "gNA"
+                    line_num_outgroup_non_synteny = len(set(column for column in line[2:] if column.startswith("gN") and column[3:].isdigit()))
+                    if line_num_outgroup_synteny + line_num_outgroup_non_synteny >= args.num_outgroups:
+                        isDeNovo = True
 
         if isDeNovo:
             # Store the CDS as de novo

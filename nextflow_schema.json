@@ -59,7 +59,7 @@
         "num_outgroups": {
           "type": "integer",
           "default": 1,
-          "description": "The required number of outgroups with a non-coding match for the strategy 1 (see https://github.com/Proginski/dense/tree/master#outgroup)",
+          "description": "The required number of outgroups with a non-coding match for the strategies 1 and 3 (see https://github.com/Proginski/dense/tree/master#outgroup)",
           "minimum": 1,
           "maximum": 100
         },
