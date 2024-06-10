@@ -28,7 +28,7 @@ parser.add_argument('match_matrix', type=str, help='The path to the match_matrix
 parser.add_argument('TRG_before_filtering', type=str, help='The path to the TRG_before_filtering tsv file')
 parser.add_argument('--strategy', type=int, choices=[1, 2, 3], default=1, help='The strategy to define de novo genes')
 parser.add_argument('--synteny', type=str, help='Whether or not to require that non-coding matches are in synteny')
-parser.add_argument('--num_outgroups', type=int, help='The required number of outgroups with a non-coding match for the strategies 1 and 3')
+parser.add_argument('--num_outgroups', type=int, help='The required number of outgroups with a non-coding match for the strategy 1')
 parser.add_argument('-o', '--output', type=str, help='The path to the output tsv file')
 
 # Parse the arguments
@@ -61,17 +61,18 @@ with open(args.match_matrix, 'r') as f:
             line[0] = line[0].replace("_elongated", "")
 
         isDeNovo = False
+        # Possible values : "noM", "CDS", "gS", "gNS", "gNA". The last 3 values can be followed by a number if they are outgroups (e.i. after the last CDS match (strategy 1))
         if args.strategy == 1 : # Must have at least n outgroups with a non-coding match
-            line_num_outgroup_synteny = len(set(column for column in line[2:] if column.startswith("gS") and column[2:].isdigit()))
+            line_outgroup_synteny = set(column[2:] for column in line[2:] if column.startswith("gS") and column[2:].isdigit())
 
             if args.synteny == "true":
                 # If their is n different values of pattern "gS[0-9]" in the line (starting from the third column)
-                if line_num_outgroup_synteny >= args.num_outgroups:
+                if len(line_outgroup_synteny) >= args.num_outgroups:
                     isDeNovo = True
             else:
                 # starts.with("gN") can be either "gNS" or "gNA"
-                line_num_outgroup_non_synteny = len(set(column for column in line[2:] if column.startswith("gN") and column[3:].isdigit()))
-                if line_num_outgroup_synteny + line_num_outgroup_non_synteny >= args.num_outgroups:
+                line_outgroup_non_synteny = set(column[3:] for column in line[2:] if column.startswith("gN") and column[3:].isdigit())
+                if len(line_outgroup_synteny) + len(line_outgroup_non_synteny) >= args.num_outgroups:
                     isDeNovo = True
 
         elif args.strategy == 2 :
@@ -84,17 +85,12 @@ with open(args.match_matrix, 'r') as f:
 
         elif args.strategy == 3 :
             if line[1] == "CDS" and not any("CDS" in column for column in line[2:]): # Check that their is one single CDS match (query)
-                # Then same as strategy 1
-                line_num_outgroup_synteny = len(set(column for column in line[2:] if column.startswith("gS") and column[2:].isdigit()))
-            
+                # Then same as strategy 2
                 if args.synteny == "true":
-                    # If their is n different values of pattern "gS[0-9]" in the line (starting from the third column)
-                    if line_num_outgroup_synteny >= args.num_outgroups:
+                    if any(column.startswith("gS") for column in line[2:]):
                         isDeNovo = True
                 else:
-                    # starts.with("gN") can be either "gNS" or "gNA"
-                    line_num_outgroup_non_synteny = len(set(column for column in line[2:] if column.startswith("gN") and column[3:].isdigit()))
-                    if line_num_outgroup_synteny + line_num_outgroup_non_synteny >= args.num_outgroups:
+                    if any(column.startswith("gS") or column.startswith("gN") for column in line[2:]):
                         isDeNovo = True
 
         if isDeNovo:
