@@ -1,7 +1,7 @@
 ![DENSE](docs/images/Dense_logo.png)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
-[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2024.01.30.578014-B31B1B.svg)](https://doi.org/10.1093/gbe/evae159)
+[![DOI](https://img.shields.io/badge/DOI%20-%2010.1093%2Fgbe%2Fevae159%20-blue)](https://doi.org/10.1093/gbe/evae159)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
