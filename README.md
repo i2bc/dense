@@ -1,7 +1,7 @@
 ![DENSE](docs/images/Dense_logo.png)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A523.04.0-23aa62.svg)](https://www.nextflow.io/)
-[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2024.01.30.578014-B31B1B.svg)](https://doi.org/10.1101/2024.01.30.578014)
+[![DOI](https://img.shields.io/badge/DOI-10.1101%2F2024.01.30.578014-B31B1B.svg)](https://doi.org/10.1093/gbe/evae159)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
@@ -10,7 +10,7 @@
 **DENSE** is a pipeline that detects genes that have emerged _de novo_ (from non-coding DNA regions), based on phylostratigraphy and synteny.
 
 ![Figure 1 from Roginski et al](docs/images/Fig1.png)
-<sub>from _Roginski et al_ (submitted)</sub>
+<sub>from _Roginski et al 2024_ (https://doi.org/10.1093/gbe/evae159)</sub>
 
 **DENSE** uses a genome of interest (focal) and its phylogenetic neighbors (genomes FASTA and GFF3 annotation files).
 
@@ -75,7 +75,7 @@ More precisely, the pipeline includes the following steps :
 
 A genome labeled as "outgroup" is a genome where a given gene is absent and which branches in the tree **after** the last genome where the gene is present.  
 <img src="docs/images/outgroup.png" width="40%" alt="outgroup illustration">  
-<sub>from _Roginski et al_ (submitted)</sub>
+<sub>from _Roginski et al 2024_ (https://doi.org/10.1093/gbe/evae159)</sub>
 
 # Set-up
 
@@ -113,13 +113,13 @@ You can use any of the following :
 You can now test **DENSE** on the example data with the following command :
 
 ```bash
-nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
+nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY>,test
 ```
 
 For example, if you have Docker installed on your machine, your command could be :
 
 ```bash
-nextflow run proginski/dense -profile docker,test
+nextflow run i2bc/dense -profile docker,test
 ```
 
 > [!NOTE]
@@ -207,7 +207,7 @@ In addition, they must have 'CDS' features with 'mRNA' parents, and these 'mRNA'
 #### command
 
 ```
-nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
+nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
 ```
 
 #### config file
@@ -230,7 +230,7 @@ params {
 #### command
 
 ```
-nextflow run proginski/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
+nextflow run i2bc/dense -profile <DOCKER|APPTAINER|SINGULARITY> -c yourparams.config
 ```
 
 #### config file
@@ -260,7 +260,7 @@ Since her HPC's admin does not like Docker (they _all_ do), she uses [Apptainer]
 ### command
 
 ```
-nextflow run proginski/dense -profile apptainer -c Lucy.config
+nextflow run i2bc/dense -profile apptainer -c Lucy.config
 ```
 
 ### config file
@@ -292,7 +292,7 @@ He changed his mind about this options in the middle of a first analysis, so thi
 ### command
 
 ```
-nextflow run proginski/dense -profile docker -c Luca.config -resume
+nextflow run i2bc/dense -profile docker -c Luca.config -resume
 ```
 
 ### config file
@@ -339,7 +339,7 @@ Simon Herman
 
 # Citations
 
-If you use DENSE for your analysis, please cite it using the following doi: [https://doi.org/10.1101/2024.01.30.578014 ](https://doi.org/10.1101/2024.01.30.578014)
+If you use DENSE for your analysis, please cite it using the following doi: [https://doi.org/10.1093/gbe/evae159 ](https://doi.org/10.1093/gbe/evae159)
 
 <!-- TODO nf-core: Add bibliography of tools and data used in your pipeline -->
 
