@@ -178,9 +178,19 @@ process TAXDUMP {
 		if [ ! -d ${workDir}/taxdump ]
 		then
 			# Download it
-			echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
-			wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
-			mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+			# echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz"
+			# wget -N ftp.ncbi.nlm.nih.gov/pub/taxonomy/new_taxdump/new_taxdump.tar.gz
+			# mkdir ${workDir}/taxdump && tar zxf new_taxdump.tar.gz -C ${workDir}/taxdump
+			echo "Downloading ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/new_taxdump_2023-03-01.zip"
+			echo "This will be only done once, and the taxdump directory will be kept for the next runs."
+			wget https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/taxdump_archive/new_taxdump_2023-03-01.zip
+			mkdir ${workDir}/taxdump && unzip new_taxdump_2023-03-01.zip -d ${workDir}/taxdump
+		fi
+		if [ ! -s ${workDir}/taxdump/ncbi_lineages_2025-06-30.csv ]
+		then
+			echo "Downloading https://zenodo.org/records/15775019/files/ncbi_lineages_2025-06-30.csv?download=1"
+			wget https://zenodo.org/records/15775019/files/ncbi_lineages_2025-06-30.csv?download=1 -O ${workDir}/taxdump/ncbi_lineages_2025-06-30.csv
+			
 		fi
 		valid_taxdump="${workDir}/taxdump"
 		echo "The taxdump directory is \${valid_taxdump}. You can use '--taxdump \${valid_taxdump}'."
@@ -229,7 +239,9 @@ process GENERA {
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
 	-b \${database} \
-	-d $taxdump
+	-r $taxdump/ncbi_lineages_2025-06-30.csv \
+	-d $taxdump \
+	-p /store/EQUIPES/BIM/MEMBERS/paul.roginski/test/559292_Diamond_results.bout
 	"""
 }
 
