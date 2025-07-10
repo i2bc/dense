@@ -240,8 +240,7 @@ process GENERA {
 	-n ${task.cpus} \
 	-b \${database} \
 	-r $taxdump/ncbi_lineages_2025-06-30.csv \
-	-d $taxdump \
-	-p /store/EQUIPES/BIM/MEMBERS/paul.roginski/test/559292_Diamond_results.bout
+	-d $taxdump
 	"""
 }
 

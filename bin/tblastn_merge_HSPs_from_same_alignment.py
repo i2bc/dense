@@ -2,104 +2,147 @@
 # -*- coding: utf-8 -*-
 
 """
-The idea behind this script is to identify alignments made of several HSP due to frameshifts in the subject.
-When BLAST considers two or more HSP to be part of a same alignment, it recomputes a new evalue with sum-statistics.
-all the different HSP of the same alignment thus share the same evalue but keep their own bitscore.
+tblastn_merge_HSPs_from_same_alignment.py
+-----------------------------------------
 
-The tblastn command has been configured with -outfmt "7 std qlen qcovhsp sframe"
-# Fields: query acc.ver, subject acc.ver, % identity, alignment length, mismatches, gap opens, q. start, q. end, s. start, s. end, evalue, bit score, query length, % query coverage per hsp, sbjct frame
+Merge HSPs from tblastn output that belong to the same alignment (frameshift-aware).
+
+When BLAST considers two or more HSPs to be part of the same alignment, it recomputes a new e-value with sum-statistics.
+All HSPs of the same alignment thus share the same e-value but keep their own bitscore.
+
+This script identifies such HSPs (by matching query, subject, e-value, strand, and different bitscore) and merges them into a single output line,
+extending the coordinates and updating the output subject identifier to include the merged region.
+
+Required fields: query acc.ver, subject acc.ver, evalue, sbjct frame, bit score, q. start, q. end, s. start, s. end
+All other columns are optional and preserved if present.
+
+Author: Paul Roginski, 2025
+License: MIT
 """
 
 import argparse
 import sys
 import math
+import warnings
 
-# Define the command-line arguments
-parser = argparse.ArgumentParser()
-parser.add_argument('inputfile', help='Input tblastn format 7 file')
-parser.add_argument('-o', '--outputfile', help='Output tblastn format 7 file (default: stdout)')
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Merge tblastn HSPs from the same alignment (frameshift-aware)."
+    )
+    parser.add_argument('inputfile', help='Input tblastn format 7 file')
+    parser.add_argument('-o', '--outputfile', help='Output tblastn format 7 file (default: stdout)')
+    return parser.parse_args()
 
-# Parse the command-line arguments
-args = parser.parse_args()
-
-# Get the column names
-with open(args.inputfile, 'r') as inp:
-        colnames = None
+def get_colnames(inputfile):
+    """Extract column names from tblastn format 7 header, return as list."""
+    with open(inputfile, 'r') as inp:
         for line in inp:
-             if line.startswith('# Fields: '):
-                 header = line.strip()[len('# Fields: '):]
-                 colnames = header.split(', ')
-                 break
-        # print(f"Column names: {colnames}")
+            if line.startswith('# Fields: '):
+                header = line.strip()[len('# Fields: '):]
+                return [c.strip() for c in header.split(',')]
+    warnings.warn("No '# Fields: ' header found in input file.")
+    sys.exit(0)
 
 def sign(num):
+    """Return the sign of a number as int (+1 or -1)."""
     return int(math.copysign(1, int(num)))
 
-# Open the input and the output files
-with open(args.inputfile, 'r') as inp, (open(args.outputfile, 'w') if args.outputfile else sys.stdout) as out:
+def merge_tblastn_hsps(inputfile, outputfile=None):
+    """
+    Merge HSPs from tblastn output that belong to the same alignment (frameshift-aware).
+    Requires the following fields in the input: query acc.ver, subject acc.ver, evalue, sbjct frame, bit score, q. start, q. end, s. start, s. end.
+    Writes output to outputfile or stdout. The input can have any column order or extra columns.
+    """
+    required_fields = [
+        'query acc.ver', 'subject acc.ver', 'evalue', 'sbjct frame', 'bit score',
+        'q. start', 'q. end', 's. start', 's. end'
+    ]
+    colnames = get_colnames(inputfile)
+    missing = [f for f in required_fields if f not in colnames]
+    if missing:
+        raise ValueError(f"Input file is missing required fields: {missing}")
 
-    if colnames is None: # If there is no hit at all in the file.
-        print(f"No hit found in {args.inputfile}. The output file will be empty.")
-        # Write a 0 octet file
-        out.write('')
-    else :
-
+    with open(inputfile, 'r') as inp, (open(outputfile, 'w') if outputfile else sys.stdout) as out:
         previous_line = (". " * len(colnames)).split()
         previous_line = dict(zip(colnames, previous_line))
 
         for line in inp:
-        # for i, line in enumerate(inp):
-        #     print(f"line {i}: {line}")
             if line.startswith('#'):
                 out.write(line)
             else:
-                # print(line)
                 line = line.strip().split('\t')
                 line = dict(zip(colnames, line))
-                try:
-                    line['q. start'] = int(line['q. start'])
-                except:
-                    sys.exit(f"Error : non q.start for line: {line}")
-                line['q. end'] = int(line['q. end'])
-                line['s. start'] = int(line['s. start'])
-                line['s. end'] = int(line['s. end'])
-                line['query length'] = int(line['query length'])
+                # Convert numeric fields (skip if not present)
+                for field in ['q. start', 'q. end', 's. start', 's. end']:
+                    if field in line:
+                        line[field] = int(line[field])
 
-                # If the query and subject are the same as for the previous HSP (line), and the evalue is non-null and the same as the previous HSP, and with the same strand but with a different bitscore,
-                # then is it assumed that the current HSP belongs to the same alignment as the previous one.
-                if line['query acc.ver'] == previous_line['query acc.ver'] and line['subject acc.ver'] == previous_line['subject acc.ver'] and line['evalue'] != "0" and line['evalue'] == previous_line['evalue'] and sign(line['sbjct frame']) == sign(previous_line['sbjct frame']) and line['bit score'] != previous_line['bit score']:
-                    line['% identity'] = "NaN"
-                    line['alignment length'] = "NaN"
-                    line['mismatches'] = "NaN"
-                    line['gap opens'] = "NaN"
-                    line['bit score'] = "Nan"
+                # Determine if this HSP can be merged with the previous one
+                can_merge = (
+                    previous_line['query acc.ver'] != '.' and
+                    line['query acc.ver'] == previous_line['query acc.ver'] and
+                    line['subject acc.ver'] == previous_line['subject acc.ver'] and
+                    line['evalue'] != "0" and
+                    line['evalue'] == previous_line['evalue'] and
+                    sign(line['sbjct frame']) == sign(previous_line['sbjct frame']) and
+                    line['bit score'] != previous_line['bit score']
+                )
+
+                if can_merge:
+                    # Merge HSPs: update coordinates, set merged fields to NaN if present
+                    for f in ['% identity', 'alignment length', 'mismatches', 'gap opens']:
+                        if f in line: line[f] = "NaN"
+                    line['bit score'] = "NaN"
                     line['q. start'] = min(line['q. start'], previous_line['q. start'])
                     line['q. end'] = max(line['q. end'], previous_line['q. end'])
-                    line['% query coverage per hsp'] = round(100*(line['q. end'] - line['q. start'] + 1)/line['query length'])
-                                        
+                    # Only update % query coverage per hsp if present and query length is present
+                    if '% query coverage per hsp' in line and 'query length' in line:
+                        try:
+                            qlen = int(line['query length'])
+                            line['% query coverage per hsp'] = round(100 * (line['q. end'] - line['q. start'] + 1) / qlen)
+                        except Exception:
+                            line['% query coverage per hsp'] = "NaN"
+
                     strand = sign(line['sbjct frame'])
-                    # If the strand is positive
                     if strand == 1:
                         line['sbjct frame'] = 42
                         line['s. start'] = min(line['s. start'], previous_line['s. start'])
                         line['s. end'] = max(line['s. end'], previous_line['s. end'])
-                    # If the strand is negative
                     elif strand == -1:
                         line['sbjct frame'] = -42
                         line['s. start'] = max(line['s. start'], previous_line['s. start'])
                         line['s. end'] = min(line['s. end'], previous_line['s. end'])
                     else:
                         raise ValueError(f"Invalid strand: {strand}")
-                # If the current HSP does not belong to the same alignment as the previous one
+                    # Do not output previous line yet, keep merging
                 else:
+                    # Output previous line if it is not the dummy
                     if previous_line['query acc.ver'] != '.':
-                        outline = '\t'.join(str(previous_line[colname]) for colname in previous_line)
+                        prev_out = previous_line.copy()
+                        prev_out['subject acc.ver'] = '_'.join([
+                            previous_line['subject acc.ver'],
+                            str(previous_line['s. start']),
+                            str(previous_line['s. end'])
+                        ])
+                        outline = '\t'.join(str(prev_out[colname]) for colname in colnames)
                         out.write(f"{outline}\n")
-                        
-                line['subject acc.ver'] = '_'.join( [ line['subject acc.ver'], str(line['s. start']), str(line['s. end']) ] )
+
                 previous_line = line
-    
-    if colnames is not None:
+
         # Write the last line
-        outline = '\t'.join(str(previous_line[colname]) for colname in previous_line)
-        out.write(f"{outline}\n")
+        if previous_line['query acc.ver'] != '.':
+            prev_out = previous_line.copy()
+            prev_out['subject acc.ver'] = '_'.join([
+                previous_line['subject acc.ver'],
+                str(previous_line['s. start']),
+                str(previous_line['s. end'])
+            ])
+            outline = '\t'.join(str(prev_out[colname]) for colname in colnames)
+            out.write(f"{outline}\n")
+
+def main():
+    args = parse_args()
+    merge_tblastn_hsps(args.inputfile, args.outputfile)
+
+if __name__ == "__main__":
+    main()
