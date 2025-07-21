@@ -8,6 +8,7 @@ from Bio import SeqIO
 from Bio.SeqRecord import SeqRecord
 from Bio.Seq import Seq
 import subprocess
+import sys
 
 
 def extend_cds(out, gfasta, fai, gff, cds, size=99, mode='simple'):
@@ -69,21 +70,29 @@ def extend_cds(out, gfasta, fai, gff, cds, size=99, mode='simple'):
             entry = line.strip().split("\t")
             if entry[2] == "CDS":
                 match = re.search(pattern, entry[8])
-                if match and match.group(1) in parent_dic:
-                    parent=match.group(1)
-                    if not 'strand' in parent_dic[parent]: #If the parent strand is not set, use the feature's strand to define it. This implies that in the unlikely case where a CDS is made of features of different strand, the first strand encountered will be use.
-                        parent_dic[parent]['strand']=entry[6]
-                    if not 'chrom' in parent_dic[parent]: #If the parent strand is not set, use the feature's strand to define it. This implies that in the unlikely case where a CDS is made of features of different strand, the first strand encountered will be use.
-                        parent_dic[parent]['chrom']=entry[0]
-                    if not 'start' in parent_dic[parent] or parent_dic[parent]['start'] > int(entry[3]): # Look for the minimum start position among the 'CDS' features sharing the parent
-                        parent_dic[parent]['start']=int(entry[3])
-                    if not 'end' in parent_dic[parent] or parent_dic[parent]['end'] < int(entry[4]): # Look for the minimum start position among the 'CDS' features sharing the parent
-                        parent_dic[parent]['end']=int(entry[4])
+                if match:
+                    # Handle multiple parents separated by commas
+                    parent_values = match.group(1).split(',')
+                    for parent_value in parent_values:
+                        parent = parent_value.strip()
+                        if parent in parent_dic:
+                            if not 'strand' in parent_dic[parent]: #If the parent strand is not set, use the feature's strand to define it. This implies that in the unlikely case where a CDS is made of features of different strand, the first strand encountered will be use.
+                                parent_dic[parent]['strand']=entry[6]
+                            if not 'chrom' in parent_dic[parent]: #If the parent strand is not set, use the feature's strand to define it. This implies that in the unlikely case where a CDS is made of features of different strand, the first strand encountered will be use.
+                                parent_dic[parent]['chrom']=entry[0]
+                            if not 'start' in parent_dic[parent] or parent_dic[parent]['start'] > int(entry[3]): # Look for the minimum start position among the 'CDS' features sharing the parent
+                                parent_dic[parent]['start']=int(entry[3])
+                            if not 'end' in parent_dic[parent] or parent_dic[parent]['end'] < int(entry[4]): # Look for the minimum start position among the 'CDS' features sharing the parent
+                                parent_dic[parent]['end']=int(entry[4])
     
     #Build a bedtool object from the collected features to use bedtools flank and thus retrieve the n flanking nucleotides.
     bed_entries = []
     for parent in parent_dic:
         entry = parent_dic[parent]
+        required_keys = ['chrom', 'start', 'end', 'strand']
+        if not all(k in entry for k in required_keys):
+            print(f"WARNING : {parent} is missing one of {required_keys}. Stop.")
+            sys.exit(1)
         chrom = entry['chrom']
         start = entry['start']-1
         end = entry['end']
