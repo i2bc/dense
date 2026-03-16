@@ -371,15 +371,15 @@ process MULTIELONGATE_FOCAL_TRG {
 	input:
 		path TRGs
 		tuple val(genome), path(gfasta), path(gff), path(fai), path(CDS_fna, stageAs: "CDS.fna"), path(CDS_faa, stageAs: "CDS.faa")
-		
+		val elongation_size
+
 	output:
 		path "TRG_multielongated.faa", emit : TRG_multielongated_faa
 		
 	"""
 	chmod -R +x ${projectDir}/bin
 
-	# Generate a FASTA with the CDS of the focal genome, elongated by 100 nucleotides up and downstream :
-	
+	# Generate a FASTA with the CDS of the focal genome, elongated by 100 nucleotides up and downstream (n nucleotides if different input than 99) :
 	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_0
 	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_1
 	# 99_nucl_translated_in_frame_0____translated_CDS____99_nucl_translated_in_frame_2
@@ -395,7 +395,7 @@ process MULTIELONGATE_FOCAL_TRG {
 	--fai $fai \
 	--gff $gff \
 	--cds $TRGs \
-	--size 99 \
+	--size $elongation_size \
 	--mode multi \
 	--out TRG_multielongated.faa
 	"""
@@ -406,6 +406,7 @@ process ELONGATE_CDS {
 
 	input:
 		tuple val(name), path(gfasta), path(gff), path(fai), path(CDS_fna, stageAs: "CDS.fna"), path(CDS_faa, stageAs: "CDS.faa")
+		val elongation_size
 
 		
 	output:
@@ -423,7 +424,7 @@ process ELONGATE_CDS {
 	--fai $fai \
 	--gff $gff \
 	--cds $CDS_fna \
-	--size 99 \
+	--size $elongation_size \
 	--mode simple \
 	--out CDS_elongated.faa
 	"""
