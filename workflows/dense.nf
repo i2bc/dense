@@ -342,11 +342,15 @@ workflow DENSE {
 		// Ad the end, 9 sequences (AA) are generated for each TRG.
 		MULTIELONGATE_FOCAL_TRG( 
 								TRG_FNA.out,
-								focal_ch
+								focal_ch,
+								params.elongation_size
 								)
 
 		// Also get an elongated version of the trasnlated CDS for every genome (subjects).
-		ELONGATE_CDS( EXTRACT_CDS.out )
+		ELONGATE_CDS( 
+					 EXTRACT_CDS.out,
+					 params.elongation_size
+					 )
 
 		// Search for homologs of the focal's TRG among :
 		// 	-the CDS (blastp),

@@ -21,6 +21,7 @@ Define where the pipeline should find input data and save output data.
 | --- | --- | --- |
 | tree | The phylogenetic tree that shows relations between the genomes (Newick format). E.g. "((Ptep:0.75680000,Pruf:0.75680000)'210':0.38205000,Pfoa:1.13885000)'220';" |  |
 | num_outgroups | The required number of outgroups with a non-coding match for the strategy 1 (see https://github.com/Proginski/dense/tree/master#outgroup) | 1 |
+| elongation_size | Which size to elongate on each side of the CDS when looking for homology. | 99 |
 | help | Throws this page. |  |
 
 ## Institutional config options

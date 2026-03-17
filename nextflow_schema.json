@@ -63,6 +63,11 @@
           "minimum": 1,
           "maximum": 100
         },
+        "elongation_size": {
+          "type": "integer",
+          "default": 99,
+          "description": "Which size to elongate on each side of the CDS when looking for homology. If set to 0, the original CDSs will be used."
+        },
         "help": {
           "type": "boolean",
           "description": "Throws this page."
