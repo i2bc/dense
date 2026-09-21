@@ -126,7 +126,7 @@ process CHECK_INPUTS {
 
 process EXTRACT_CDS {
 
-	publishDir "${params.outdir}/CDS",  pattern: "*_CDS.f*"
+	publishDir "${params.outdir}/CDS", mode: 'copy', pattern: "*_CDS.f*"
 
 	input:
 		tuple val(name), path(fasta), path(gff)
@@ -210,7 +210,7 @@ process GENERA {
 
 	tag 'phylostratigraphy'
 
-	publishDir "${params.outdir}/genera_results"
+	publishDir "${params.outdir}/genera_results", mode: 'copy'
 
 	cpus params.max_cpus
 
@@ -254,7 +254,7 @@ process GENERA_FAST {
 
 	tag 'phylostratigraphy'
 
-	publishDir "${params.outdir}/genera_results"
+	publishDir "${params.outdir}/genera_results", mode: 'copy'
 
 	cpus params.max_cpus
 
@@ -293,7 +293,7 @@ process GENERA_FAST {
 
 process GENERA_FILTER {
 
-        publishDir "${params.outdir}/genera_results"
+        publishDir "${params.outdir}/genera_results", mode: 'copy'
 
         input:
             val taxdump
@@ -657,7 +657,7 @@ process CHECK_SYNTENY_INPUTS {
 
 process CHECK_SYNTENY {
 
-	publishDir "${params.outdir}/synteny"
+	publishDir "${params.outdir}/synteny", mode: 'copy'
 
 	// max_proc_mem = '20.GB'
 	// memory { "${MemoryUnit.of(params.max_memory).toMega()}mb" < "${MemoryUnit.of(max_proc_mem).toMega()}mb" ? params.max_memory : max_proc_mem }
@@ -698,7 +698,7 @@ process CHECK_SYNTENY {
 
 process SYNTENY_TO_TABLE {
 
-	publishDir "${params.outdir}"
+	publishDir "${params.outdir}", mode: 'copy'
 	
 	input:
 		path TRG_table
@@ -755,7 +755,7 @@ process SYNTENY_TO_TABLE {
 
 process TRG_TABLE_TO_MATCH_MATRIX {
 
-	publishDir "${params.outdir}"
+	publishDir "${params.outdir}", mode: 'copy'
 
 	input:
 		path TRG_table
@@ -772,7 +772,7 @@ process TRG_TABLE_TO_MATCH_MATRIX {
 
 process MATCH_MATRIX_TO_DE_NOVO_GENES {
 
-	publishDir "${params.outdir}"
+	publishDir "${params.outdir}", mode: 'copy'
 
 	input:
 		path match_matrix
