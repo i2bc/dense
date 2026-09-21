@@ -21,7 +21,7 @@ awk '
 	# qstart and qend as start and end
 	!/#/ && $2!= "*" { print $1"_vs_"$2, $7-1, $8 }
 
-' $1 > ${1}.tmp.bed
+' "$1" > "${1}.tmp.bed"
 
 
 
@@ -78,7 +78,7 @@ awk '
 
 	}
 
-' ${1}.tmp_qlencov.tsv $1
+' "${1}.tmp_qlencov.tsv" "$1"
 
 
 

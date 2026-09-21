@@ -50,6 +50,10 @@ if len(tree_taxa_not_in_names) > 0 :
 new_tree = tree.extract_tree_with_taxa_labels(labels=names)
 
 print("Final tree")
-print(new_tree.as_ascii_plot())
+try:
+    print(new_tree.as_ascii_plot())
+except Exception:
+    # ascii plot may fail for minimal trees (e.g. single leaf); just print taxa
+    print("[tree has {} leaf/leaves: {}]".format(len(names), ", ".join(names)))
 
 new_tree.write(path=args.out, schema="newick")

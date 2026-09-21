@@ -24,7 +24,7 @@ nextflow.enable.dsl = 2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-//include { validateParameters; paramsHelp } from 'plugin/nf-validation'
+//include { validateParameters; paramsHelp } from 'plugin/nf-schema'
 
 // Print help message if needed
 // if (params.help) {

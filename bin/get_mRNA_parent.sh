@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Look for an mRNA feature in the GFF
-hasmRNA=$( awk -F"\t" 'BEGIN {out = "false"} $3 ~ /^mRNA$/ {out = "true"; exit 0} END {print out}' $1)
+hasmRNA=$( awk -F"\t" 'BEGIN {out = "false"} $3 ~ /^mRNA$/ {out = "true"; exit 0} END {print out}' "$1")
 
 if [ "${hasmRNA}" == "true" ]
 then
@@ -29,7 +29,7 @@ then
 			}
 
 		}
-	' $1
+	' "$1"
 
 else
     # $1 has no mRNA feature
@@ -52,6 +52,6 @@ else
                         }
 
                 }
-        ' $1
+        ' "$1"
 
 fi

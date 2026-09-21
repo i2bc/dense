@@ -55,6 +55,7 @@ Set the top limit for requested resources for any single job.
 | taxids | A '.tsv' file with two columns : col1 = genome name, col2 = taxid. Must include all genomes (focal and neighbors). |  |
 | trg_node | A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank'). |  |
 | trg_rank | A taxonomic rank (e.g. 'order') to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_node'). | genus |
+| tmpdir | Directory used by genEra as temporary working space (can require hundreds of GB). Defaults to the output directory (`--outdir`) if not set. |  |
 
 ## Synteny checking
 

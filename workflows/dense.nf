@@ -20,7 +20,7 @@ log.info "\n"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } from 'plugin/nf-validation'
+include { validateParameters; paramsHelp; paramsSummaryLog } from 'plugin/nf-schema'
 
 // Print help message, supply typical command line usage for the pipeline
 if (params.help) {
@@ -33,6 +33,22 @@ validateParameters()
 
 // Print summary of supplied parameters
 log.info paramsSummaryLog(workflow)
+
+// Prevent execution from inside the pipeline installation folder
+if (workflow.launchDir == workflow.projectDir) {
+    log.error "=========================================================================="
+    log.error " ERROR: Execution from within the pipeline installation directory detected!"
+    log.error "=========================================================================="
+    log.error " Running the pipeline directly from ${workflow.projectDir} is disabled."
+    log.error " This prevents your 'work/' and 'dense_results/' directories from being"
+    log.error " permanently deleted if you ever update or uninstall the pipeline."
+    log.error ""
+    log.error " Please create a dedicated working directory (e.g., ~/dense_run/),"
+    log.error " navigate to it, and run the pipeline from there using:"
+    log.error " nextflow run i2bc/dense [OPTIONS]"
+    log.error "=========================================================================="
+    exit 1
+}
 
 // Parameters compatibility
 stop = false

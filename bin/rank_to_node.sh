@@ -1,6 +1,6 @@
-taxdump=$1
-taxid=$2
-TRG_rank=$3
+taxdump="$1"
+taxid="$2"
+TRG_rank="$3"
 
 rank=""
 counter=0

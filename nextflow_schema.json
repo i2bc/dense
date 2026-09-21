@@ -1,5 +1,5 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/denovogenes/master/nextflow_schema.json",
   "title": "DENSE pipeline parameters",
   "description": "Identifies genes that have emerged de novo (from non-coding DNA).",
@@ -10,7 +10,10 @@
       "type": "object",
       "fa_icon": "fas fa-terminal",
       "description": "Define where the pipeline should find input data and save output data.",
-      "required": ["outdir", "gendir"],
+      "required": [
+        "outdir",
+        "gendir"
+      ],
       "properties": {
         "outdir": {
           "type": "string",
@@ -43,7 +46,10 @@
           "maximum": 3
         }
       },
-      "required": ["focal", "strategy"]
+      "required": [
+        "focal",
+        "strategy"
+      ]
     },
     "other_important_parameters": {
       "title": "Other important parameters",
@@ -172,6 +178,11 @@
           "format": "file-path",
           "mimetype": "tsv"
         },
+        "tmpdir": {
+          "type": "string",
+          "description": "Directory used by genEra as a temporary working space (can require hundreds of GB). Defaults to the output directory if not set.",
+          "format": "directory-path"
+        },
         "trg_node": {
           "type": "string",
           "description": "A taxonomic node (e.g. Mammalia) to filter CDS into TRGs. CDS associated with this node or on of ots children will be considered as TRGs (incompatible with '--trg_rank')."
@@ -217,7 +228,10 @@
           "type": "string",
           "description": "The tool to perform alignments for orthologs definition.",
           "default": "diamond",
-          "enum": ["blast", "diamond"]
+          "enum": [
+            "blast",
+            "diamond"
+          ]
         },
         "diamond_sens": {
           "type": "string",

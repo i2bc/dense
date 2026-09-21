@@ -381,9 +381,9 @@ def closest_genes(bed, gff_path, n):
 
     def get_gene_id(line):
         try:
-            return re.search(r".*ID=([^;]+).*", line.fields[11]).group(1)
+            return re.search(r"(?:^|;)ID=([^;]+)", line.fields[11]).group(1)
         except:
-            sys.stderr.write(f"No '.*ID=([^;]+).*' found in line: {line}\n")
+            sys.stderr.write(f"No '(?:^|;)ID=([^;]+)' found in line: {line}\n")
             sys.exit()
 
     bed_genes_dic = {}
@@ -472,7 +472,7 @@ def closest_genes_caller(
                     line = line.strip().split('\t')
 
                     # Get the 'ID' value
-                    results = re.search(r".*ID=([^;]+).*", line[8])
+                    results = re.search(r"(?:^|;)ID=([^;]+)", line[8])
                     if results:
 
                         ID = results.group(1)
@@ -619,7 +619,7 @@ def closest_genes_caller(
                         gff_seqs.append(line[0])
 
                     # Get the 'ID' value
-                    results = re.search(r".*ID=([^;]+).*", line[8])
+                    results = re.search(r"(?:^|;)ID=([^;]+)", line[8])
                     if results:
 
                         ID = results.group(1)
@@ -745,7 +745,7 @@ def input_formatter(list_path, gffB_path):
 
                 gffB_seqs.append(interval.fields[0])
 
-                results = re.search(r".*ID=([^;]+).*", interval.fields[8])
+                results = re.search(r"(?:^|;)ID=([^;]+)", interval.fields[8])
                 if results:
 
                     ID = results.group(1)

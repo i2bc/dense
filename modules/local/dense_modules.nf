@@ -197,9 +197,9 @@ process TAXDUMP {
 
 	else
 
-		# Just keep taxdump as it is.
+
 		echo "The user provided a taxdump directory. Using it."
-		valid_taxdump=$taxdump
+		valid_taxdump=\$(realpath $taxdump)
 
 	fi
 	"""
@@ -226,6 +226,8 @@ process GENERA {
 		
 	"""
 	database=\$(echo $db | sed "s/.dmnd\$//")
+	tmpdir_path="${params.tmpdir ?: params.outdir}/genEra_tmp"
+	mkdir -p "\${tmpdir_path}"
 
 	# -t taxID
 	# -q query fasta
@@ -240,7 +242,8 @@ process GENERA {
 	-n ${task.cpus} \
 	-b \${database} \
 	-r $taxdump/ncbi_lineages_2025-06-30.csv \
-	-d $taxdump
+	-d $taxdump \
+	-x \${tmpdir_path}
 	"""
 }
 
@@ -267,6 +270,8 @@ process GENERA_FAST {
 		
 	"""
 	database=\$(echo $db | sed "s/.dmnd\$//")
+	tmpdir_path="${params.tmpdir ?: params.outdir}/genEra_tmp"
+	mkdir -p "\${tmpdir_path}"
 
 	# -t taxID
 	# -q query fasta
@@ -280,7 +285,8 @@ process GENERA_FAST {
 	-a $neighbors_CDS \
 	-n ${task.cpus} \
 	-b \${database} \
-	-d $taxdump
+	-d $taxdump \
+	-x \${tmpdir_path}
 	"""
 }
 
@@ -290,7 +296,7 @@ process GENERA_FILTER {
         publishDir "${params.outdir}/genera_results"
 
         input:
-            path taxdump
+            val taxdump
             val taxid
             val TRG_node
             val TRG_rank

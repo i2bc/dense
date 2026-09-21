@@ -1,0 +1,7 @@
+.nextflow*
+.nextflow/
+work/
+containers/
+pipeline_info/
+__pycache__/
+*.pyc
