@@ -191,6 +191,8 @@ include { CHECK_SYNTENY                 } from '../modules/local/dense_modules.n
 include { SYNTENY_TO_TABLE              } from '../modules/local/dense_modules.nf'
 include { TRG_TABLE_TO_MATCH_MATRIX     } from '../modules/local/dense_modules.nf'
 include { MATCH_MATRIX_TO_DE_NOVO_GENES } from '../modules/local/dense_modules.nf'
+include { INTEGRITY_CHECK              } from '../modules/local/dense_modules.nf'
+include { INTEGRITY_TO_TABLE           } from '../modules/local/dense_modules.nf'
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -395,6 +397,42 @@ workflow DENSE {
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	Optionally check the integrity of non-coding genomic matches (enabled by default)
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	*/
+
+	if ( params.integrity_check ) {
+
+		// Pair each neighbor genome's best_hits with its FASTA/FAI from EXTRACT_CDS
+		integrity_main_ch = BLAST_BEST_HITS.out
+		.combine(
+			EXTRACT_CDS.out
+			.map { name, fasta, gff, fai, CDS_fna, CDS_faa -> [ name, fasta, gff, fai, CDS_fna, CDS_faa ] },
+			by: 0
+		)
+
+		// The focal TRG amino-acid FASTA (produced by TRG_FNA translated = CDS_faa filtered)
+		// We use the focal CDS_faa filtered to the TRG list, i.e. the output of TRG_FNA
+		// translated via fastatranslate.
+		// As a pragmatic approximation we pass focal_ch CDS_faa (all focal proteins);
+		// integrity_search.py only uses sequences that appear in the best_hits.
+		focal_TRG_faa_ch = focal_ch
+		.map { name, fasta, gff, fai, CDS_fna, CDS_faa -> CDS_faa }
+		.first()
+
+		INTEGRITY_CHECK(
+						params.focal,
+						BLAST_BEST_HITS.out,
+						EXTRACT_CDS.out
+						.map { name, fasta, gff, fai, CDS_fna, CDS_faa -> [ name, fasta, gff, fai, CDS_fna, CDS_faa ] },
+						focal_TRG_faa_ch,
+						params.elongation_size,
+						params.integrity_threshold
+					   )
+	}
+
+	/*
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	Build a table to report the best hits of each TRG in the neighbor genomes
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	*/
@@ -421,6 +459,22 @@ workflow DENSE {
 				BLAST_BEST_HITS.out.map{ name, best_hits -> best_hits }.toList()
 				)
 	TRG_table_ch = TRG_TABLE.out
+
+	/*
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	If enabled, append the integrity check column to the TRG_table
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	*/
+
+	if ( params.integrity_check ) {
+		INTEGRITY_TO_TABLE(
+						   TRG_table_ch,
+						   INTEGRITY_CHECK.out
+						   .map { name, tsv -> tsv }
+						   .toList()
+						  )
+		TRG_table_ch = INTEGRITY_TO_TABLE.out
+	}
 
 	/*
 	~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

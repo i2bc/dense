@@ -792,3 +792,149 @@ process MATCH_MATRIX_TO_DE_NOVO_GENES {
 	--out denovogenes.tsv
 	"""
 }
+
+
+process INTEGRITY_CHECK {
+
+	/*
+	For each neighbor genome, check the integrity of its non-coding genomic matches against each TRG.
+	A match is considered "intact" if the orthologous non-coding locus can encode the same protein
+	without frameshift, truncation, or internal stop codon.
+	Uses integrity_search.py (tblastn + Smith-Waterman alignment via psa).
+	*/
+
+	input:
+		val focal
+		tuple val(genome_name), path(best_hits)
+		tuple val(genome_name2), path(gfasta), path(gff), path(fai), path(CDS_fna), path(CDS_faa)
+		path focal_TRG_faa
+		val elongation_size
+		val integrity_threshold
+
+	output:
+		tuple val(genome_name), path("${focal}_vs_${genome_name}_integrity.tsv")
+
+	"""
+	chmod -R +x ${projectDir}/bin
+
+	touch ${focal}_vs_${genome_name}_integrity.tsv
+
+	# Build a FASTA index of the neighbor genome (samtools faidx)
+	samtools faidx $gfasta
+
+	# Build a lookup of TRG AA sequences from the focal TRG FASTA (tab-separated: name\\tsequence)
+	awk '/^>/{if(name) print name"\\t"seq; name=substr(\$0,2); seq=""} !/^>/{seq=seq\$0} END{if(name) print name"\\t"seq}' $focal_TRG_faa > trg_aa_lookup.txt
+
+	# Get the chrom sizes for clamping coordinates
+	awk '{print \$1"\\t"\$2}' ${gfasta}.fai > chrom_sizes.txt
+
+	# For each non-coding genomic best-hit (type == "genome"), run integrity_search.py
+	# best_hits columns: focal  TRG  genome  sequence  type
+	# The "sequence" field for genome hits is encoded as: scaffold_start_end
+	# (produced by blast_hits_and_best_hits.sh which stores the sseqid as scaffold_start_end)
+	awk -v focal="$focal" -v neighbor="$genome_name" -v ext=$elongation_size -v thr=$integrity_threshold '
+		BEGIN {FS=OFS="\\t"}
+
+		# Load TRG AA sequences
+		FILENAME == "trg_aa_lookup.txt" {
+			aa[\$1] = \$2
+		}
+
+		# Load chrom sizes
+		FILENAME == "chrom_sizes.txt" {
+			chrsize[\$1] = \$2
+		}
+
+		# Process non-coding genome hits
+		FILENAME != "trg_aa_lookup.txt" && FILENAME != "chrom_sizes.txt" && \$5 == "genome" {
+			trg = gensub(/_elongated.*/, "", "g", \$2)
+			seq_field = \$4
+			# seq_field format: scaffold_start_end (from tblastn sseqid column)
+			# Parse using last two underscores as delimiters
+			n = split(seq_field, parts, "_")
+			# Reconstruct scaffold name (may contain underscores itself)
+			start_coord = parts[n-1]
+			end_coord   = parts[n]
+			scaffold = ""
+			for(i=1; i<=n-2; i++) scaffold = (i==1 ? parts[i] : scaffold"_"parts[i])
+
+			# Extend coordinates
+			ext_start = start_coord - ext - 1   # convert to 0-based for samtools (1-based input)
+			ext_end   = end_coord   + ext
+			if (ext_start < 0) ext_start = 0
+			if (scaffold in chrsize && ext_end > chrsize[scaffold]) ext_end = chrsize[scaffold]
+
+			# samtools faidx uses 1-based inclusive coordinates
+			region = scaffold":"(ext_start+1)"-"ext_end
+
+			if (trg in aa) {
+				print trg, \$2, region, aa[trg]
+			}
+		}
+	' trg_aa_lookup.txt chrom_sizes.txt $best_hits > nc_matches_to_check.tsv
+
+	# Run integrity_search.py for each non-coding match
+	echo -e "TRG\\tsequence\\tintegrity" > ${focal}_vs_${genome_name}_integrity.tsv
+
+	while IFS=\$'\\t' read -r trg seq_name region aa_seq; do
+		nt_seq=\$(samtools faidx $gfasta \$region 2>/dev/null | awk '!/^>/{printf \$0}')
+		if [ -z "\$nt_seq" ]; then
+			status="no_match"
+		else
+			status=\$(integrity_search.py "\$aa_seq" "\$nt_seq" --integrity_threshold $integrity_threshold 2>/dev/null || echo "error")
+		fi
+		echo -e "\${trg}\\t\${seq_name}\\t\${status}" >> ${focal}_vs_${genome_name}_integrity.tsv
+	done < nc_matches_to_check.tsv
+	"""
+}
+
+
+process INTEGRITY_TO_TABLE {
+
+	/*
+	Append the integrity check results as a new column to the TRG_table.
+	Matches on type "genome" get their integrity status; others get "NA".
+	*/
+
+	publishDir "${params.outdir}", mode: 'copy'
+
+	input:
+		path TRG_table
+		path integritys
+
+	output:
+		path "TRG_table.tsv"
+
+	"""
+	# Add the integrity column header
+	awk -v TRG_table="${TRG_table}" '
+		BEGIN {FS=OFS="\\t"}
+
+		# In the integrity files, store data[TRG:sequence] = status
+		FILENAME != TRG_table && FNR != 1 {
+			trg      = \$1
+			sequence = \$2
+			status   = \$3
+			data[trg"\\t"sequence] = status
+		}
+
+		# In the TRG table, print header with new column
+		FILENAME == TRG_table && FNR == 1 {
+			print \$0, "integrity"
+		}
+
+		# For other lines, look up integrity status
+		FILENAME == TRG_table && FNR != 1 {
+			trg = gensub(/_elongated.*/, "", "g", \$2)
+			key = trg"\\t"\$4
+			if (key in data) {
+				print \$0, data[key]
+			} else {
+				print \$0, "NA"
+			}
+		}
+	' \$integritys ${TRG_table} > TRG_table.tmp
+
+	mv TRG_table.tmp TRG_table.tsv
+	"""
+}

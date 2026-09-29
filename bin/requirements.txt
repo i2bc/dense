@@ -1,8 +1,10 @@
+biopython
 configargparse
 csv
 dendropy
 numpy
 pandas
 prettytable
+psa
 pybedtools
 PyYAML

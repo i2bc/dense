@@ -246,6 +246,26 @@
           ]
         }
       }
+    },
+    "integrity_checking": {
+      "title": "Integrity checking",
+      "type": "object",
+      "description": "",
+      "default": "",
+      "properties": {
+        "integrity_check": {
+          "type": "boolean",
+          "default": true,
+          "description": "Whether to check the integrity of the non-coding orthologous match for each de novo gene candidate. The check verifies the absence of frameshift, truncation, and internal stop codons in the matching locus. Results are added as an 'integrity' column in TRG_table.tsv."
+        },
+        "integrity_threshold": {
+          "type": "number",
+          "default": 0.8,
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Query coverage threshold (0-1) used by the integrity check. If the aligned portion of the non-coding match covers less than this fraction of the de novo protein, the match is reported as 'truncated'. Also used for the internal-stop check."
+        }
+      }
     }
   },
   "allOf": [
@@ -269,6 +289,9 @@
     },
     {
       "$ref": "#/definitions/synteny_checking"
+    },
+    {
+      "$ref": "#/definitions/integrity_checking"
     }
   ]
 }
