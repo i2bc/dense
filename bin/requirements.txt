@@ -5,6 +5,5 @@ dendropy
 numpy
 pandas
 prettytable
-psa
 pybedtools
 PyYAML
