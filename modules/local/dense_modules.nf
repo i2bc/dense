@@ -881,10 +881,15 @@ process INTEGRITY_CHECK {
 		if [ -z "\$nt_seq" ]; then
 			status="no_match"
 		else
-			status=\$(integrity_search.py "\$aa_seq" "\$nt_seq" --integrity_threshold $integrity_threshold 2>/dev/null || echo "error")
+			# Pass sequences via temp FASTA files to avoid shell arg issues (sequences may contain *, spaces, etc.)
+			printf ">%s\\n%s\\n" "\$trg" "\$aa_seq" > _tmp_query.faa
+			printf ">%s\\n%s\\n" "\$seq_name" "\$nt_seq" > _tmp_subject.fna
+			status=\$(integrity_search.py _tmp_query.faa _tmp_subject.fna --integrity_threshold $integrity_threshold 2>/dev/null || echo "error")
 		fi
-		echo -e "\${trg}\\t\${seq_name}\\t\${status}" >> ${focal}_vs_${genome_name}_integrity.tsv
-	done < nc_matches_to_check.tsv
+		printf "%s\\t%s\\t%s\\n" "\$trg" "\$seq_name" "\$status" >> ${focal}_vs_${genome_name}_integrity.tsv
+	done < nc_matches_to_check.tsv || true
+
+	rm -f _tmp_query.faa _tmp_subject.fna
 	"""
 }
 
